@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Pawven",
+    "slug": "pawven",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "pawven",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pawven.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Pawven uses your location to show nearby events and pre-fill TNR report locations."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF8F0"
+      },
+      "package": "com.pawven.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Pawven uses your location to show nearby events and pre-fill TNR report locations."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
