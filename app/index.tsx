@@ -101,7 +101,7 @@ export default function OnboardingScreen() {
           </View>
 
           <Text style={styles.heroTagline}>
-            Track, connect & protect animals in your community
+            Feed, track & connect — all for the strays in your community
           </Text>
 
           <View style={styles.statCardRow}>
@@ -121,7 +121,7 @@ export default function OnboardingScreen() {
         <View style={styles.body}>
           <Text style={styles.welcomeTitle}>Welcome to Pawven</Text>
           <Text style={styles.welcomeSubtitle}>
-            Join thousands of volunteers, feeders & NGOs{"\n"}working together
+            Join thousands of cat lovers, NGOs and vets — {"\n"}working together
             for stray animals.
           </Text>
 
