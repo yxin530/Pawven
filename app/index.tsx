@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
+  Modal,
+  Pressable,
   SafeAreaView,
+  ScrollView,
   StatusBar,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
 
-// ─── Icon placeholders ───────────────────────────────────────────────────────
 const PawIcon = () => <Text style={styles.appIconEmoji}>🐾</Text>;
 const TNRIcon = () => <Text style={styles.featureIconEmoji}>🐱</Text>;
 const NearbyIcon = () => <Text style={styles.featureIconEmoji}>📍</Text>;
@@ -18,7 +19,6 @@ const MapIcon = () => <Text style={styles.listIconEmoji}>🗺️</Text>;
 const ReportIcon = () => <Text style={styles.listIconEmoji}>📋</Text>;
 const CommunityIcon = () => <Text style={styles.listIconEmoji}>👥</Text>;
 
-// ─── Hero bubble decorations ─────────────────────────────────────────────────
 const HeroBubbles = () => (
   <>
     <View style={[styles.bubble, styles.bubbleTopLeft]} />
@@ -27,8 +27,15 @@ const HeroBubbles = () => (
   </>
 );
 
-// ─── Hero stat cards ──────────────────────────────────────────────────────────
-const StatCard = ({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) => (
+const StatCard = ({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) => (
   <View style={styles.statCard}>
     {icon}
     <View style={styles.statCardText}>
@@ -38,8 +45,15 @@ const StatCard = ({ icon, title, subtitle }: { icon: React.ReactNode; title: str
   </View>
 );
 
-// ─── Feature list row ─────────────────────────────────────────────────────────
-const FeatureRow = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
+const FeatureRow = ({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) => (
   <View style={styles.featureRow}>
     <View style={styles.featureIconWrap}>{icon}</View>
     <View style={styles.featureTextWrap}>
@@ -49,32 +63,36 @@ const FeatureRow = ({ icon, title, description }: { icon: React.ReactNode; title
   </View>
 );
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
   const router = useRouter();
+  const [sheetVisible, setSheetVisible] = useState(false);
 
-  const handleGetStarted = () => {
-    router.push('/(auth)/sign-up');
+  const goToPhone = () => {
+    setSheetVisible(false);
+    router.push("/(auth)/phone_screen");
+  };
+
+  const goToEmail = () => {
+    setSheetVisible(false);
+    router.push("/(auth)/email_screen");
   };
 
   const handleSignIn = () => {
-    router.push('/(auth)/sign-in');
+    router.push("/(auth)/sign-in");
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
+      <StatusBar barStyle="light-content" backgroundColor={DARK} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* ── Hero section ── */}
         <View style={styles.hero}>
           <HeroBubbles />
 
-          {/* App logo + name */}
           <View style={styles.logoRow}>
             <View style={styles.appIconWrap}>
               <PawIcon />
@@ -83,10 +101,9 @@ export default function OnboardingScreen() {
           </View>
 
           <Text style={styles.heroTagline}>
-            Track, connect &amp; protect animals in your community
+            Track, connect & protect animals in your community
           </Text>
 
-          {/* Stat cards */}
           <View style={styles.statCardRow}>
             <StatCard
               icon={<TNRIcon />}
@@ -101,12 +118,11 @@ export default function OnboardingScreen() {
           </View>
         </View>
 
-        {/* ── Body section ── */}
         <View style={styles.body}>
           <Text style={styles.welcomeTitle}>Welcome to Pawven</Text>
           <Text style={styles.welcomeSubtitle}>
-            Join thousands of volunteers, feeders &amp; NGOs{'\n'}working
-            together for stray animals.
+            Join thousands of volunteers, feeders & NGOs{"\n"}working together
+            for stray animals.
           </Text>
 
           <View style={styles.featureList}>
@@ -127,10 +143,9 @@ export default function OnboardingScreen() {
             />
           </View>
 
-          {/* CTA buttons */}
           <TouchableOpacity
             style={styles.btnPrimary}
-            onPress={handleGetStarted}
+            onPress={() => setSheetVisible(true)}
             activeOpacity={0.85}
           >
             <Text style={styles.btnPrimaryText}>Get started</Text>
@@ -144,25 +159,138 @@ export default function OnboardingScreen() {
             <Text style={styles.btnSecondaryText}>Sign in</Text>
           </TouchableOpacity>
 
-          {/* Legal footer */}
           <Text style={styles.legal}>
-            By continuing you agree to our{' '}
-            <Text style={styles.legalLink}>Terms</Text> and{' '}
+            By continuing you agree to our{" "}
+            <Text style={styles.legalLink}>Terms</Text> and{" "}
             <Text style={styles.legalLink}>Privacy Policy</Text>
           </Text>
         </View>
       </ScrollView>
+
+      <GetStartedSheet
+        visible={sheetVisible}
+        onDismiss={() => setSheetVisible(false)}
+        onPhonePress={goToPhone}
+        onEmailPress={goToEmail}
+        onApplePress={goToEmail}
+        onGooglePress={goToEmail}
+      />
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const DARK = '#1C1C1E';
-const DARK_CARD = '#2C2C2E';
-const BUBBLE = '#2E2E30';
-const WHITE = '#FFFFFF';
-const GREY_TEXT = '#8E8E93';
-const BODY_BG = '#FFFFFF';
+type GetStartedSheetProps = {
+  visible: boolean;
+  onDismiss: () => void;
+  onPhonePress: () => void;
+  onEmailPress: () => void;
+  onApplePress: () => void;
+  onGooglePress: () => void;
+};
+
+function GetStartedSheet({
+  visible,
+  onDismiss,
+  onPhonePress,
+  onEmailPress,
+  onApplePress,
+  onGooglePress,
+}: GetStartedSheetProps) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onDismiss}
+    >
+      <View style={styles.sheetOverlay}>
+        <Pressable style={styles.sheetBackdrop} onPress={onDismiss} />
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandleWrap}>
+            <View style={styles.sheetHandle} />
+          </View>
+
+          <View style={styles.sheetHeader}>
+            <View style={styles.sheetSparkleWrap}>
+              <Text style={styles.sheetSparkle}>✦</Text>
+            </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close get started sheet"
+              style={styles.sheetClose}
+              onPress={onDismiss}
+            >
+              <Text style={styles.sheetCloseText}>×</Text>
+            </Pressable>
+          </View>
+
+          <View style={{ gap: 16 }}>
+            <Text style={styles.sheetTitle}>Get Started</Text>
+            <Text style={styles.sheetDescription}>
+              Join Pawven to report TNR activities, discover nearby helpers and
+              protect animals in your community.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.sheetPrimaryButton}
+              activeOpacity={0.85}
+              onPress={onPhonePress}
+            >
+              <Text style={styles.sheetPrimaryButtonText}>
+                Continue with Phone
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.sheetSecondaryButton}
+              activeOpacity={0.8}
+              onPress={onEmailPress}
+            >
+              <Text style={styles.sheetSecondaryButtonText}>
+                Continue with Email
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.sheetSocialRow}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Apple"
+                style={styles.sheetSocialButton}
+                activeOpacity={0.8}
+                onPress={onApplePress}
+              >
+                <Text style={styles.sheetSocialText}>Apple</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Google"
+                style={styles.sheetSocialButton}
+                activeOpacity={0.8}
+                onPress={onGooglePress}
+              >
+                <Text style={styles.sheetSocialText}>G</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={styles.sheetLegal}>
+            By continuing, you agree to Pawven's{" "}
+            <Text style={styles.sheetLegalLink}>Terms of Use.</Text>
+          </Text>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const DARK = "#1C1C1E";
+const DARK_CARD = "#2C2C2E";
+const BUBBLE = "#2E2E30";
+const WHITE = "#FFFFFF";
+const GREY_TEXT = "#8E8E93";
+const BODY_BG = "#FFFFFF";
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -175,20 +303,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-
-  // ── Hero ──────────────────────────────────────────────────────────────────
   hero: {
     backgroundColor: DARK,
     paddingTop: 48,
     paddingBottom: 32,
     paddingHorizontal: 24,
-    alignItems: 'center',
-    overflow: 'hidden',
+    alignItems: "center",
+    overflow: "hidden",
   },
-
-  // Decorative background bubbles
   bubble: {
-    position: 'absolute',
+    position: "absolute",
     borderRadius: 999,
     backgroundColor: BUBBLE,
   },
@@ -208,13 +332,11 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     top: 20,
-    left: '30%' as any,
+    left: "30%",
   },
-
-  // Logo
   logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
     zIndex: 1,
   },
@@ -223,8 +345,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     backgroundColor: WHITE,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 10,
   },
   appIconEmoji: {
@@ -232,31 +354,28 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: WHITE,
     letterSpacing: 0.3,
   },
-
   heroTagline: {
     fontSize: 15,
-    color: '#AEAEB2',
-    textAlign: 'center',
+    color: "#AEAEB2",
+    textAlign: "center",
     lineHeight: 22,
     marginBottom: 24,
     zIndex: 1,
     paddingHorizontal: 16,
   },
-
-  // Stat cards
   statCardRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     zIndex: 1,
   },
   statCard: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: DARK_CARD,
     borderRadius: 14,
     paddingVertical: 12,
@@ -271,7 +390,7 @@ const styles = StyleSheet.create({
   },
   statCardTitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
     color: WHITE,
   },
   statCardSubtitle: {
@@ -279,8 +398,6 @@ const styles = StyleSheet.create({
     color: GREY_TEXT,
     marginTop: 2,
   },
-
-  // ── Body ──────────────────────────────────────────────────────────────────
   body: {
     flex: 1,
     backgroundColor: BODY_BG,
@@ -288,39 +405,36 @@ const styles = StyleSheet.create({
     paddingTop: 36,
     paddingBottom: 24,
   },
-
   welcomeTitle: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#1C1C1E',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: DARK,
+    textAlign: "center",
     marginBottom: 10,
   },
   welcomeSubtitle: {
     fontSize: 14,
     color: GREY_TEXT,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 21,
     marginBottom: 32,
   },
-
-  // Feature list
   featureList: {
     gap: 24,
     marginBottom: 36,
   },
   featureRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 16,
   },
   featureIconWrap: {
     width: 42,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#F2F2F7',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#F2F2F7",
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
   listIconEmoji: {
@@ -332,8 +446,8 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#1C1C1E',
+    fontWeight: "600",
+    color: DARK,
     marginBottom: 3,
   },
   featureDescription: {
@@ -341,43 +455,161 @@ const styles = StyleSheet.create({
     color: GREY_TEXT,
     lineHeight: 19,
   },
-
-  // Buttons
   btnPrimary: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: DARK,
     borderRadius: 14,
     paddingVertical: 17,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
   },
   btnPrimaryText: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.2,
   },
   btnSecondary: {
     borderRadius: 14,
     paddingVertical: 17,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
   },
   btnSecondaryText: {
-    color: '#1C1C1E',
+    color: DARK,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
-
-  // Footer
   legal: {
     fontSize: 11,
     color: GREY_TEXT,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 16,
   },
   legalLink: {
-    color: '#1C1C1E',
-    textDecorationLine: 'underline',
-    fontWeight: '500',
+    color: DARK,
+    textDecorationLine: "underline",
+    fontWeight: "500",
+  },
+  sheetOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.32)",
+  },
+  sheetBackdrop: {
+    flex: 1,
+  },
+  sheet: {
+    backgroundColor: "#FAF7F8",
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    paddingHorizontal: 26,
+    paddingTop: 8,
+    paddingBottom: 34,
+    maxHeight: "60%",
+  },
+  sheetHandleWrap: {
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  sheetHandle: {
+    width: 58,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#E6E2E4",
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+  sheetSparkleWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0ECEF",
+  },
+  sheetSparkle: {
+    fontSize: 30,
+    color: DARK,
+    lineHeight: 34,
+  },
+  sheetClose: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0ECEF",
+  },
+  sheetCloseText: {
+    color: "#B8B5B7",
+    fontSize: 32,
+    lineHeight: 34,
+    fontWeight: "300",
+  },
+  sheetTitle: {
+    color: DARK,
+    fontSize: 30,
+    fontWeight: "800",
+  },
+  sheetDescription: {
+    color: "#7D7A7D",
+    fontSize: 17,
+    lineHeight: 25,
+  },
+  sheetPrimaryButton: {
+    backgroundColor: DARK,
+    borderRadius: 16,
+    minHeight: 58,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetPrimaryButtonText: {
+    color: WHITE,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  sheetSecondaryButton: {
+    backgroundColor: "#F0EEF1",
+    borderRadius: 16,
+    minHeight: 58,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetSecondaryButtonText: {
+    color: DARK,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  sheetSocialRow: {
+    flexDirection: "row",
+    gap: 14,
+  },
+  sheetSocialButton: {
+    flex: 1,
+    backgroundColor: "#F0EEF1",
+    borderRadius: 16,
+    minHeight: 58,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetSocialText: {
+    color: DARK,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  sheetLegal: {
+    color: "#A3A0A3",
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+    marginTop: 18,
+  },
+  sheetLegalLink: {
+    color: DARK,
+    fontWeight: "500",
   },
 });
