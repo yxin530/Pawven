@@ -1,54 +1,45 @@
-import { Tabs, useRouter } from "expo-router";
-import { Pressable, Text } from "react-native";
-import { Colors } from "@/constants/Colors";
-
-function ProfileButton() {
-  const router = useRouter();
-
-  return (
-    <Pressable
-      onPress={() => router.push("/profile")}
-      accessibilityRole="button"
-      accessibilityLabel="Open profile"
-      style={{
-        marginLeft: 16,
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        overflow: "hidden",
-        backgroundColor: Colors.surface,
-        alignItems: "center",
-        justifyContent: "center",
-        borderWidth: 1,
-        borderColor: Colors.border,
-      }}
-    >
-      <Text style={{ fontSize: 14 }}>👤</Text>
-    </Pressable>
-  );
-}
+import { Tabs } from "expo-router";
+import { View, Text, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
 
 export default function TabLayout() {
   return (
     <Tabs
       initialRouteName="home"
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.disabled,
+        headerShown: false,
+        tabBarActiveTintColor: "#1C1C1E",
+        tabBarInactiveTintColor: "#8E8E93",
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
         tabBarStyle: {
-          backgroundColor: Colors.background,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
+          position: "absolute",
+          bottom: 24,
+          left: 80,
+          right: 80,
+          borderRadius: 32,
+          height: 52,
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.4)",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.12,
+          shadowRadius: 16,
+          elevation: 10,
+          paddingBottom: 4,
+          paddingTop: 4,
+          overflow: "hidden",
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-        },
-        headerShown: true,
-        headerStyle: { backgroundColor: Colors.background },
-        headerTitleStyle: { color: Colors.text, fontWeight: "600", fontSize: 18 },
-        headerShadowVisible: false,
-        headerLeft: () => <ProfileButton />,
+        tabBarBackground: () => (
+          <View style={[StyleSheet.absoluteFill, { borderRadius: 32, overflow: "hidden" }]}>
+            <BlurView
+              intensity={80}
+              tint="light"
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        ),
       }}
     >
       <Tabs.Screen
@@ -62,14 +53,14 @@ export default function TabLayout() {
         name="discover"
         options={{
           title: "Discover",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔍</Text>,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🧭</Text>,
         }}
       />
       <Tabs.Screen
         name="tnr"
         options={{
           title: "TNR",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🐾</Text>,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
         }}
       />
     </Tabs>
