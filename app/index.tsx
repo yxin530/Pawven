@@ -172,8 +172,6 @@ export default function OnboardingScreen() {
         onDismiss={() => setSheetVisible(false)}
         onPhonePress={goToPhone}
         onEmailPress={goToEmail}
-        onApplePress={goToEmail}
-        onGooglePress={goToEmail}
       />
     </SafeAreaView>
   );
@@ -184,8 +182,6 @@ type GetStartedSheetProps = {
   onDismiss: () => void;
   onPhonePress: () => void;
   onEmailPress: () => void;
-  onApplePress: () => void;
-  onGooglePress: () => void;
 };
 
 function GetStartedSheet({
@@ -193,8 +189,6 @@ function GetStartedSheet({
   onDismiss,
   onPhonePress,
   onEmailPress,
-  onApplePress,
-  onGooglePress,
 }: GetStartedSheetProps) {
   return (
     <Modal
@@ -211,8 +205,8 @@ function GetStartedSheet({
           </View>
 
           <View style={styles.sheetHeader}>
-            <View style={styles.sheetSparkleWrap}>
-              <Text style={styles.sheetSparkle}>✦</Text>
+            <View style={styles.sheetPawWrap}>
+              <Text style={styles.sheetPaw}>🐾</Text>
             </View>
 
             <Pressable
@@ -251,28 +245,6 @@ function GetStartedSheet({
                 Continue with Email
               </Text>
             </TouchableOpacity>
-
-            <View style={styles.sheetSocialRow}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Continue with Apple"
-                style={styles.sheetSocialButton}
-                activeOpacity={0.8}
-                onPress={onApplePress}
-              >
-                <Text style={styles.sheetSocialText}>Apple</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Continue with Google"
-                style={styles.sheetSocialButton}
-                activeOpacity={0.8}
-                onPress={onGooglePress}
-              >
-                <Text style={styles.sheetSocialText}>G</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           <Text style={styles.sheetLegal}>
@@ -523,7 +495,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 18,
   },
-  sheetSparkleWrap: {
+  sheetPawWrap: {
     width: 46,
     height: 46,
     borderRadius: 23,
@@ -531,10 +503,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F0ECEF",
   },
-  sheetSparkle: {
-    fontSize: 30,
-    color: DARK,
-    lineHeight: 34,
+  sheetPaw: {
+    fontSize: 25,
+    lineHeight: 29,
   },
   sheetClose: {
     width: 44,
@@ -583,23 +554,6 @@ const styles = StyleSheet.create({
     color: DARK,
     fontSize: 17,
     fontWeight: "700",
-  },
-  sheetSocialRow: {
-    flexDirection: "row",
-    gap: 14,
-  },
-  sheetSocialButton: {
-    flex: 1,
-    backgroundColor: "#F0EEF1",
-    borderRadius: 16,
-    minHeight: 58,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sheetSocialText: {
-    color: DARK,
-    fontSize: 18,
-    fontWeight: "800",
   },
   sheetLegal: {
     color: "#A3A0A3",
