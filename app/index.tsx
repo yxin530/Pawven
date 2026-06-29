@@ -1,9 +1,15 @@
 import { Redirect } from "expo-router";
+import { useAuthStore } from "@/store/auth-store";
 
 /**
- * Entry point — goes straight to tabs (dev mode, no auth).
- * When Clerk is configured, this will check auth state first.
+ * Entry point — shows onboarding if not signed in, tabs if signed in.
  */
 export default function Index() {
-  return <Redirect href="/(tabs)/home" />;
+  const session = useAuthStore((s) => s.session);
+
+  if (session) {
+    return <Redirect href="/(tabs)/home" />;
+  }
+
+  return <Redirect href="/onboarding" />;
 }
