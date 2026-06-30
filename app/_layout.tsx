@@ -11,6 +11,7 @@ export default function RootLayout() {
       <Stack.Screen name="discoverMapScreen" />
       <Stack.Screen name="badgesScreen" />
       <Stack.Screen name="feederManagement" />
+      <Stack.Screen name="createEvent" />
       <Stack.Screen name="ngo" />
       <Stack.Screen
         name="profile"
