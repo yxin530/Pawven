@@ -7,7 +7,9 @@ export default function RootLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="roleSelect" />
       <Stack.Screen name="discoverMapScreen" />
+      <Stack.Screen name="badgesScreen" />
       <Stack.Screen
         name="profile"
         options={{ presentation: "modal", headerShown: false }}

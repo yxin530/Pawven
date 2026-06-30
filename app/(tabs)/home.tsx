@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Config } from '@/constants/Config';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getGreeting() {
@@ -180,6 +181,49 @@ export default function HomeScreen() {
   const router = useRouter();
   const user = { name: 'Sarah Chen' };
 
+  // Fetch real events from backend
+  const [activities, setActivities] = useState(UPCOMING_ACTIVITIES);
+  const [communities, setCommunities] = useState(COMMUNITIES);
+
+  useEffect(() => {
+    // Fetch events from backend
+    fetch(`${Config.API_BASE_URL}/events`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.slice(0, 3).map((event: any, idx: number) => {
+            const d = new Date(event.start_time);
+            const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+            if (idx === 0) {
+              return {
+                id: event.id,
+                type: 'featured',
+                date: `${d.toLocaleDateString('en-US', { weekday: 'short' })}, ${months[d.getMonth()]} ${d.getDate()} · ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+                title: event.title,
+                location: event.address || 'TBD',
+                going: event.rsvp_count || 0,
+                action: 'Join',
+                actionStyle: 'outline',
+              };
+            }
+            return {
+              id: event.id,
+              type: 'list',
+              month: months[d.getMonth()],
+              day: String(d.getDate()),
+              title: event.title,
+              location: `${event.address || 'TBD'} · ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+              tags: [event.category || 'Event'],
+              action: 'RSVP',
+              actionStyle: idx % 2 === 0 ? 'solid' : 'outline',
+            };
+          });
+          setActivities(mapped);
+        }
+      })
+      .catch(() => { /* keep mock data */ });
+  }, []);
+
   // Smooth animated top bar
   const topBarTranslateY = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
@@ -229,7 +273,7 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.iconBtn}>
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/profile')}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/normalProfile')}>
             <Avatar size={36} uri="https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=72" />
           </TouchableOpacity>
         </View>
@@ -284,7 +328,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {UPCOMING_ACTIVITIES.map(item =>
+        {activities.map(item =>
           item.type === 'featured' ? (
             <FeaturedActivityCard key={item.id} item={item} onPress={() => {}} />
           ) : (

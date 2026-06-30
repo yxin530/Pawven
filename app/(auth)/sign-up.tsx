@@ -22,7 +22,7 @@ export default function SignUpScreen() {
     }
     setError(null);
     await signIn(email, password);
-    router.replace("/(tabs)/home");
+    router.push("/roleSelect");
   };
 
   return (

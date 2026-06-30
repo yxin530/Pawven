@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Config } from '@/constants/Config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type FilterKey = 'All' | 'Feeder' | 'Communities Activity' | 'NGOs';
@@ -130,6 +131,45 @@ const FILTERS: FilterKey[] = ['All', 'Feeder', 'Communities Activity', 'NGOs'];
 export default function DiscoverScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
+  const [feeders, setFeeders] = useState(FEEDERS);
+  const [orgs, setOrgs] = useState(NGOS);
+  const [vets, setVets] = useState(VETS);
+
+  useEffect(() => {
+    // Fetch feeders from backend
+    fetch(`${Config.API_BASE_URL}/feeders`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setFeeders(data.map((f: any) => ({
+            id: f.id,
+            name: f.name,
+            area: f.address || 'Unknown',
+            colony: `Kibble ${f.kibble_level}%`,
+            distance: '~nearby',
+            following: false,
+          })));
+        }
+      })
+      .catch(() => {});
+
+    // Fetch organizations
+    fetch(`${Config.API_BASE_URL}/orgs`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const ngoList = data.filter((o: any) => o.type === 'ngo').map((o: any) => ({
+            id: o.id, name: o.name, volunteers: '—', icon: '🏢', following: false,
+          }));
+          const vetList = data.filter((o: any) => o.type === 'vet').map((o: any) => ({
+            id: o.id, name: o.name, clinic: `${o.address} · ${o.hours}`, rating: '4.8', specialty: o.description?.slice(0, 30) || '',
+          }));
+          if (ngoList.length) setOrgs(ngoList);
+          if (vetList.length) setVets(vetList);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <View style={styles.safeArea}>
@@ -163,16 +203,16 @@ export default function DiscoverScreen() {
         </View>
 
         {/* Feeders */}
-        {(activeFilter === 'All' || activeFilter === 'Feeder') && (<><SectionHeader title="Feeders" /><View style={styles.card}>{FEEDERS.map((item, idx) => (<View key={item.id}><FeederRow item={item} />{idx < FEEDERS.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
+        {(activeFilter === 'All' || activeFilter === 'Feeder') && (<><SectionHeader title="Feeders" /><View style={styles.card}>{feeders.map((item: any, idx: number) => (<View key={item.id}><FeederRow item={item} />{idx < feeders.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
 
         {/* Communities */}
         {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" /><CommunityPhotoPost item={COMMUNITY_POSTS[0]} /><CommunityTextPost item={COMMUNITY_POSTS[1]} /></>)}
 
         {/* NGOs */}
-        {(activeFilter === 'All' || activeFilter === 'NGOs') && (<><SectionHeader title="NGOs" /><View style={styles.ngoRow}>{NGOS.map(item => <NgoCard key={item.id} item={item} />)}</View></>)}
+        {(activeFilter === 'All' || activeFilter === 'NGOs') && (<><SectionHeader title="NGOs" /><View style={styles.ngoRow}>{orgs.map((item: any) => <NgoCard key={item.id} item={item} />)}</View></>)}
 
         {/* Vets */}
-        {activeFilter === 'All' && (<><SectionHeader title="Vets" /><View style={styles.card}>{VETS.map((item, idx) => (<View key={item.id}><VetRow item={item} />{idx < VETS.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
+        {activeFilter === 'All' && (<><SectionHeader title="Vets" /><View style={styles.card}>{vets.map((item: any, idx: number) => (<View key={item.id}><VetRow item={item} />{idx < vets.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
 
         <View style={{ height: 100 }} />
       </ScrollView>

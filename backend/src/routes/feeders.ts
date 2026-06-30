@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Feeder } from '../models/Feeder';
+import { supabase } from '../config/supabase';
 import { requireAuth } from '../middleware/auth';
 
 const router = Router();
@@ -9,13 +9,15 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
 
-    const query: any = {};
+    let query = supabase.from('feeders').select('*');
     if (status) {
-      query.status = status;
+      query = query.eq('status', status as string);
     }
 
-    const feeders = await Feeder.find(query);
-    res.json(feeders);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch feeders' });
   }
@@ -36,8 +38,13 @@ router.post('/dispense', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    const feeder = await Feeder.findById(feederId);
-    if (!feeder) {
+    const { data: feeder, error: fetchError } = await supabase
+      .from('feeders')
+      .select('*')
+      .eq('id', feederId)
+      .single();
+
+    if (fetchError || !feeder) {
       res.status(404).json({ error: 'Feeder not found' });
       return;
     }
@@ -47,18 +54,27 @@ router.post('/dispense', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    // Update feeder state
-    feeder.lastDispensed = new Date();
-    feeder.kibbleLevel = Math.max(0, feeder.kibbleLevel - grams);
-    await feeder.save();
+    const newKibbleLevel = Math.max(0, feeder.kibble_level - grams);
+
+    const { data: updated, error: updateError } = await supabase
+      .from('feeders')
+      .update({
+        last_dispensed: new Date().toISOString(),
+        kibble_level: newKibbleLevel,
+      })
+      .eq('id', feederId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
 
     // In production, this would publish an MQTT message to the feeder topic
-    // e.g., mqttClient.publish(feeder.mqttTopic, JSON.stringify({ grams }))
+    // e.g., mqttClient.publish(feeder.mqtt_topic, JSON.stringify({ grams }))
 
     res.json({
       success: true,
       message: `Dispensed ${grams}g from ${feeder.name}`,
-      feeder,
+      feeder: updated,
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to dispense' });

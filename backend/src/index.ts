@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import { env } from './config/env';
-import { connectDB } from './config/db';
 import { errorHandler } from './middleware/errorHandler';
 import feedersRouter from './routes/feeders';
 import eventsRouter from './routes/events';
@@ -26,7 +25,6 @@ app.use('/api/badges', badgesRouter);
 
 // Also mount dispense at /api/dispense (alias for POST /api/feeders/dispense)
 app.post('/api/dispense', (req, res, next) => {
-  // Forward to feeders router's /dispense handler
   req.url = '/dispense';
   feedersRouter(req, res, next);
 });
@@ -40,11 +38,6 @@ app.get('/health', (_req, res) => {
 app.use(errorHandler);
 
 // Start server
-async function start() {
-  await connectDB();
-  app.listen(env.PORT, () => {
-    console.log(`🚀 Pawven API server running on port ${env.PORT}`);
-  });
-}
-
-start();
+app.listen(env.PORT, () => {
+  console.log(`🚀 Pawven API server running on port ${env.PORT}`);
+});

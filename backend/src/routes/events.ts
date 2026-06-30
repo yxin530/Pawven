@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Event } from '../models/Event';
-import { Rsvp } from '../models/Rsvp';
-import { Update } from '../models/Update';
+import { supabase } from '../config/supabase';
 import { requireAuth } from '../middleware/auth';
 
 const router = Router();
@@ -11,12 +9,14 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const { category, status } = req.query;
 
-    const query: any = {};
-    if (category) query.category = category;
-    if (status) query.status = status;
+    let query = supabase.from('events').select('*').order('start_time', { ascending: true });
+    if (category) query = query.eq('category', category as string);
+    if (status) query = query.eq('status', status as string);
 
-    const events = await Event.find(query).sort({ startTime: 1 });
-    res.json(events);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch events' });
   }
@@ -25,25 +25,34 @@ router.get('/', async (req: Request, res: Response) => {
 // POST /api/events — Create event (requires auth)
 router.post('/', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { title, description, coverPhotoUrl, location, startTime, endTime, category } = req.body;
+    const { title, description, coverPhotoUrl, lat, lng, address, startTime, endTime, category } = req.body;
 
-    if (!title || !description || !location || !startTime || !endTime || !category) {
-      res.status(400).json({ error: 'Missing required fields: title, description, location, startTime, endTime, category' });
+    if (!title || !description || !startTime || !endTime || !category) {
+      res.status(400).json({ error: 'Missing required fields: title, description, startTime, endTime, category' });
       return;
     }
 
-    const event = await Event.create({
-      title,
-      description,
-      coverPhotoUrl,
-      location,
-      startTime,
-      endTime,
-      hostUserId: req.userId,
-      category,
-    });
+    const { data, error } = await supabase
+      .from('events')
+      .insert({
+        title,
+        description,
+        cover_photo_url: coverPhotoUrl,
+        lat,
+        lng,
+        address,
+        start_time: startTime,
+        end_time: endTime,
+        host_user_id: req.userId,
+        category,
+        status: 'upcoming',
+      })
+      .select()
+      .single();
 
-    res.status(201).json(event);
+    if (error) throw error;
+
+    res.status(201).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create event' });
   }
@@ -55,24 +64,49 @@ router.post('/:id/rsvp', requireAuth, async (req: Request, res: Response) => {
     const eventId = req.params.id;
     const userId = req.userId!;
 
-    const event = await Event.findById(eventId);
-    if (!event) {
+    // Check event exists
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+
+    if (eventError || !event) {
       res.status(404).json({ error: 'Event not found' });
       return;
     }
 
     // Check for existing RSVP
-    const existing = await Rsvp.findOne({ eventId, userId });
+    const { data: existing } = await supabase
+      .from('rsvps')
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('user_id', userId)
+      .single();
+
     if (existing) {
       res.status(409).json({ error: 'Already RSVPd to this event' });
       return;
     }
 
-    await Rsvp.create({ eventId, userId });
-    event.rsvpCount += 1;
-    await event.save();
+    // Create RSVP
+    const { error: rsvpError } = await supabase
+      .from('rsvps')
+      .insert({ event_id: eventId, user_id: userId });
 
-    res.status(201).json({ success: true, rsvpCount: event.rsvpCount });
+    if (rsvpError) throw rsvpError;
+
+    // Increment rsvp_count
+    const { data: updated, error: updateError } = await supabase
+      .from('events')
+      .update({ rsvp_count: (event.rsvp_count || 0) + 1 })
+      .eq('id', eventId)
+      .select('rsvp_count')
+      .single();
+
+    if (updateError) throw updateError;
+
+    res.status(201).json({ success: true, rsvpCount: updated.rsvp_count });
   } catch (error) {
     res.status(500).json({ error: 'Failed to RSVP' });
   }
@@ -88,24 +122,35 @@ router.post('/:id/updates', requireAuth, async (req: Request, res: Response) => 
       return;
     }
 
-    const event = await Event.findById(req.params.id);
-    if (!event) {
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (eventError || !event) {
       res.status(404).json({ error: 'Event not found' });
       return;
     }
 
     // Only the host can post event updates
-    if (event.hostUserId.toString() !== req.userId) {
+    if (event.host_user_id !== req.userId) {
       res.status(403).json({ error: 'Only the event host can post updates' });
       return;
     }
 
-    const update = await Update.create({
-      threadType: 'event',
-      threadId: event._id,
-      authorId: req.userId,
-      message,
-    });
+    const { data: update, error: insertError } = await supabase
+      .from('updates')
+      .insert({
+        thread_type: 'event',
+        thread_id: event.id,
+        author_id: req.userId,
+        message,
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
 
     res.status(201).json(update);
   } catch (error) {

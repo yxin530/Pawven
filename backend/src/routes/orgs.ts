@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Org } from '../models/Organization';
+import { supabase } from '../config/supabase';
 
 const router = Router();
 
@@ -8,11 +8,15 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const { type } = req.query;
 
-    const query: any = {};
-    if (type) query.type = type;
+    let query = supabase.from('organizations').select('*');
+    if (type) {
+      query = query.eq('type', type as string);
+    }
 
-    const orgs = await Org.find(query);
-    res.json(orgs);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch organizations' });
   }
@@ -21,12 +25,18 @@ router.get('/', async (req: Request, res: Response) => {
 // GET /api/orgs/:id — Get single org detail
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const org = await Org.findById(req.params.id);
-    if (!org) {
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) {
       res.status(404).json({ error: 'Organization not found' });
       return;
     }
-    res.json(org);
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch organization' });
   }

@@ -14,8 +14,8 @@ export default function TabLayout() {
         tabBarStyle: {
           position: "absolute",
           bottom: 24,
-          left: 80,
-          right: 80,
+          left: 40,
+          right: 40,
           borderRadius: 32,
           height: 52,
           backgroundColor: "rgba(255, 255, 255, 0.8)",
@@ -61,6 +61,18 @@ export default function TabLayout() {
         options={{
           title: "TNR",
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="normalProfile"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="applySmartFeeder"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
