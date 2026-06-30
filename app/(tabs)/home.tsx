@@ -273,8 +273,18 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.iconBtn}>
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/normalProfile')}>
-            <Avatar size={36} uri="https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=72" />
+          <TouchableOpacity onPress={() => {
+            const role = (global as any).__pawven_role;
+            if (role === 'ngo' || role === 'vet') {
+              router.push('/(tabs)/ngoProfile');
+            } else {
+              router.push('/(tabs)/normalProfile');
+            }
+          }}>
+            <Image
+              source={{ uri: 'https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=72' }}
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: GREY_BG }}
+            />
           </TouchableOpacity>
         </View>
       </Animated.View>

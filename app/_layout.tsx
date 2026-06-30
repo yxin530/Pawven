@@ -10,6 +10,8 @@ export default function RootLayout() {
       <Stack.Screen name="roleSelect" />
       <Stack.Screen name="discoverMapScreen" />
       <Stack.Screen name="badgesScreen" />
+      <Stack.Screen name="feederManagement" />
+      <Stack.Screen name="ngo" />
       <Stack.Screen
         name="profile"
         options={{ presentation: "modal", headerShown: false }}

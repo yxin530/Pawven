@@ -37,7 +37,7 @@ export default function EmailScreen() {
     }
 
     if (code.length === CODE_LENGTH) {
-      router.replace("/(tabs)/home");
+      router.replace("/roleSelect");
     }
   };
 

@@ -70,6 +70,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="ngoProfile"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="applySmartFeeder"
         options={{
           href: null,

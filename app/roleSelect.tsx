@@ -42,14 +42,9 @@ export default function OnboardingRoleScreen() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('ngo');
 
   const handleContinue = () => {
-    if (selectedRole === 'cat-lover') {
-      // Cat lovers → normal profile (tabs with normalProfile)
-      router.replace('/(tabs)/home');
-    } else {
-      // NGO / Vet → NGO/Vet profile setup (TODO: create ngoVetProfile screen)
-      // For now, route to tabs home. Replace with '/ngoVetProfile' once created.
-      router.replace('/(tabs)/home');
-    }
+    // Store role globally so Home screen routes to correct profile
+    (global as any).__pawven_role = selectedRole;
+    router.replace('/(tabs)/home');
   };
 
   return (
@@ -57,7 +52,7 @@ export default function OnboardingRoleScreen() {
       {/* Logo */}
       <View style={styles.logoRow}>
         <View style={styles.logoIcon}>
-          <Text style={{ fontSize: 14, color: '#fff' }}>🔗</Text>
+          <Text style={{ fontSize: 14, color: '#fff' }}>🐾</Text>
         </View>
         <Text style={styles.logoText}>Pawven</Text>
       </View>
