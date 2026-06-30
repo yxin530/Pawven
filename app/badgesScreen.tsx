@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Config } from '@/constants/Config';
 
 type Badge = {
   id: string;
@@ -40,8 +41,34 @@ type Filter = (typeof FILTERS)[number];
 export default function BadgesScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<Filter>('All');
+  const [badges, setBadges] = useState<Badge[]>(BADGES);
 
-  const filteredBadges = BADGES.filter(b => activeFilter === 'All' || b.category === activeFilter);
+  useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        const res = await fetch(`${Config.API_BASE_URL}/badges`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: Badge[] = data.map((b: any) => ({
+            id: b.id,
+            label: b.name || b.label || 'Badge',
+            xp: b.xp || 20,
+            icon: b.icon || '⭐',
+            category: b.category || 'Community',
+            earned: true,
+          }));
+          setBadges(mapped);
+        }
+      } catch (e) {
+        // Keep mock badges as fallback
+        console.log('Using mock badges:', e);
+      }
+    };
+    fetchBadges();
+  }, []);
+
+  const filteredBadges = badges.filter(b => activeFilter === 'All' || b.category === activeFilter);
   const earnedBadges = filteredBadges.filter(b => b.earned);
   const lockedBadges = filteredBadges.filter(b => !b.earned);
 

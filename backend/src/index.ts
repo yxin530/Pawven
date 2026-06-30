@@ -29,6 +29,12 @@ app.post('/api/dispense', (req, res, next) => {
   feedersRouter(req, res, next);
 });
 
+// POST /api/feeder-applications — Receive smart feeder applications
+app.post('/api/feeder-applications', (req, res) => {
+  console.log('Feeder application received:', req.body);
+  res.status(201).json({ success: true, message: 'Application received' });
+});
+
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

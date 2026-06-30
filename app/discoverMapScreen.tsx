@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
+import { Config } from '@/constants/Config';
 
 type MapFilterKey = 'All' | 'Feeder' | 'Events' | 'NGOs' | 'Vets';
 
@@ -68,6 +69,7 @@ export default function DiscoverMapScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const [activeFilter, setActiveFilter] = useState<MapFilterKey>('All');
+  const [pins, setPins] = useState(MAP_PINS);
   const [region, setRegion] = useState({
     latitude: 3.139,
     longitude: 101.6869,
@@ -75,7 +77,48 @@ export default function DiscoverMapScreen() {
     longitudeDelta: 0.03,
   });
 
-  const filteredPins = MAP_PINS.filter(pin => {
+  useEffect(() => {
+    const fetchPins = async () => {
+      try {
+        const [feedersRes, orgsRes] = await Promise.all([
+          fetch(`${Config.API_BASE_URL}/feeders`),
+          fetch(`${Config.API_BASE_URL}/orgs`),
+        ]);
+        const newPins: typeof MAP_PINS = [];
+        if (feedersRes.ok) {
+          const feeders = await feedersRes.json();
+          if (Array.isArray(feeders)) {
+            feeders.forEach((f: any, idx: number) => {
+              if (f.lat && f.lng) {
+                newPins.push({ id: `feeder-${f.id || idx}`, type: 'feeder', icon: '🍽️', lat: f.lat, lng: f.lng, title: f.name || `Feeder ${idx + 1}` });
+              }
+            });
+          }
+        }
+        if (orgsRes.ok) {
+          const orgs = await orgsRes.json();
+          if (Array.isArray(orgs)) {
+            orgs.forEach((o: any, idx: number) => {
+              if (o.lat && o.lng) {
+                const type = o.type === 'vet' ? 'vet' : 'ngo';
+                const icon = o.type === 'vet' ? '🩺' : '🏢';
+                newPins.push({ id: `org-${o.id || idx}`, type, icon, lat: o.lat, lng: o.lng, title: o.name || `Org ${idx + 1}` });
+              }
+            });
+          }
+        }
+        if (newPins.length > 0) {
+          setPins(newPins);
+        }
+      } catch (e) {
+        // Keep mock pins as fallback
+        console.log('Using mock map pins:', e);
+      }
+    };
+    fetchPins();
+  }, []);
+
+  const filteredPins = pins.filter(pin => {
     if (activeFilter === 'All') return true;
     if (activeFilter === 'Feeder') return pin.type === 'feeder';
     if (activeFilter === 'Events') return pin.type === 'community';

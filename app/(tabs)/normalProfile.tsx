@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,43 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { Config } from '@/constants/Config';
 
 // Get TNR completed count from mock data (in production this comes from the store/backend)
 const MOCK_TNR_COMPLETED = 1; // Only 1 cat neutered (matches TNR progress screen)
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [badgesCount, setBadgesCount] = useState(12);
+  const [catsNeutered, setCatsNeutered] = useState(MOCK_TNR_COMPLETED);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [badgesRes, reportsRes] = await Promise.all([
+          fetch(`${Config.API_BASE_URL}/badges`),
+          fetch(`${Config.API_BASE_URL}/reports`),
+        ]);
+        if (badgesRes.ok) {
+          const badges = await badgesRes.json();
+          if (Array.isArray(badges)) {
+            setBadgesCount(badges.length || 12);
+          }
+        }
+        if (reportsRes.ok) {
+          const reports = await reportsRes.json();
+          if (Array.isArray(reports)) {
+            const completedCount = reports.filter((r: any) => r.status === 'completed').length;
+            if (completedCount > 0) setCatsNeutered(completedCount);
+          }
+        }
+      } catch (e) {
+        // Keep static values as fallback
+        console.log('Using fallback profile data:', e);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleCameraPress = () => {
     Alert.alert(
@@ -136,7 +167,7 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.milestoneCard}>
           <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>❤️</Text></View>
-          <Text style={styles.milestoneNumber}>{MOCK_TNR_COMPLETED}</Text>
+          <Text style={styles.milestoneNumber}>{catsNeutered}</Text>
           <Text style={styles.milestoneLabel}>Cats Neutered</Text>
         </View>
       </View>
@@ -181,7 +212,7 @@ export default function ProfileScreen() {
       </View>
 
       <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/badgesScreen')}>
-        <Text style={styles.viewAllText}>🐾  View All 12 Badges</Text>
+        <Text style={styles.viewAllText}>🐾  View All {badgesCount} Badges</Text>
       </TouchableOpacity>
 
       <View style={{ height: 100 }} />

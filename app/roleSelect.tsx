@@ -6,6 +6,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Config } from '@/constants/Config';
 
 export type UserRole = 'ngo' | 'vet' | 'cat-lover';
 
@@ -44,6 +45,14 @@ export default function OnboardingRoleScreen() {
   const handleContinue = () => {
     // Store role globally so Home screen routes to correct profile
     (global as any).__pawven_role = selectedRole;
+
+    // Fire-and-forget POST to save role selection
+    fetch(`${Config.API_BASE_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: selectedRole }),
+    }).catch((e) => console.log('Role save failed (non-blocking):', e));
+
     router.replace('/(tabs)/home');
   };
 

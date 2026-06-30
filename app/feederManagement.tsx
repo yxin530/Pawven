@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Config } from '@/constants/Config';
 
 type ActivityEntry = { time: string; usersFed: number; grams: number };
 
@@ -19,13 +20,43 @@ export default function FeederManagementScreen() {
   const router = useRouter();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['feeder-1']));
   const [visibleCount, setVisibleCount] = useState(2);
+  const [feeders, setFeeders] = useState<Feeder[]>(FEEDERS);
+
+  useEffect(() => {
+    const fetchFeeders = async () => {
+      try {
+        const res = await fetch(`${Config.API_BASE_URL}/feeders`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: Feeder[] = data.map((f: any, idx: number) => ({
+            id: f.id || `feeder-${idx + 1}`,
+            name: f.name || `Feeder #${idx + 1}`,
+            location: f.location || 'Unknown',
+            type: f.type || 'Normal',
+            typeIcon: f.type?.includes('solar') ? '☀️' : '🔋',
+            status: f.status === 'online' ? 'Online' : 'Offline',
+            usersFed: f.users_fed || 0,
+            usersFedTotal: f.users_fed_total || 100,
+            kibblesG: f.kibble_level || 0,
+            kibblesGTotal: f.kibbles_total || 2000,
+            recentActivity: [],
+          }));
+          setFeeders(mapped);
+        }
+      } catch (e) {
+        console.log('Using mock feeder data:', e);
+      }
+    };
+    fetchFeeders();
+  }, []);
 
   const toggleExpanded = (id: string) => {
     setExpandedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
 
-  const visibleFeeders = FEEDERS.slice(0, visibleCount);
-  const hasMore = visibleCount < FEEDERS.length;
+  const visibleFeeders = feeders.slice(0, visibleCount);
+  const hasMore = visibleCount < feeders.length;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>

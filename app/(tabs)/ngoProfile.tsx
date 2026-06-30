@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,53 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { Config } from '@/constants/Config';
 
 export default function NGOVetProfileScreen() {
   const router = useRouter();
   const role = (global as any).__pawven_role === 'vet' ? 'Vet' : 'NGO';
   const orgName = role === 'Vet' ? 'Dr. Lim Cat Clinic' : 'Paws & Care NGO';
+
+  const [feederData, setFeederData] = useState([
+    { name: 'Feeder #1', kibbles: '1,240 g', lastFed: '2h ago' },
+    { name: 'Feeder #2', kibbles: '890 g', lastFed: '5h ago' },
+    { name: 'Feeder #3', kibbles: '2,100 g', lastFed: '1d ago' },
+  ]);
+
+  useEffect(() => {
+    const fetchFeeders = async () => {
+      try {
+        const res = await fetch(`${Config.API_BASE_URL}/feeders`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((f: any, idx: number) => {
+            const lastDispensed = f.last_dispensed ? getTimeAgoSimple(f.last_dispensed) : 'N/A';
+            return {
+              name: f.name || `Feeder #${idx + 1}`,
+              kibbles: `${f.kibble_level?.toLocaleString() || 0} g`,
+              lastFed: lastDispensed,
+            };
+          });
+          setFeederData(mapped);
+        }
+      } catch (e) {
+        console.log('Using mock feeder data:', e);
+      }
+    };
+    fetchFeeders();
+  }, []);
+
+  const getTimeAgoSimple = (dateStr: string): string => {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diffMs = now - then;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 1) return 'just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  };
 
   const handleEditProfile = async () => {
     Alert.alert('Upload Photo', 'Choose how you want to upload', [
@@ -88,11 +130,7 @@ export default function NGOVetProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📈 Feeder Tracking Record</Text>
           <View style={styles.tableCard}>
-            {[
-              { name: 'Feeder #1', kibbles: '1,240 g', lastFed: '2h ago' },
-              { name: 'Feeder #2', kibbles: '890 g', lastFed: '5h ago' },
-              { name: 'Feeder #3', kibbles: '2,100 g', lastFed: '1d ago' },
-            ].map((r, idx) => (
+            {feederData.map((r, idx) => (
               <View key={idx} style={styles.tableRow}>
                 <Text style={styles.tableCell}>{r.name}</Text>
                 <Text style={styles.tableCellCenter}>{r.kibbles}</Text>

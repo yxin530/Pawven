@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
+import TNRReportCasesScreen from './ngoVetTnr';
+import { Config } from '@/constants/Config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -175,16 +177,43 @@ function CaseCard({ item }: { item: TNRCase }) {
 
 function TNRWithCases({ onReport }: { onReport: () => void }) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
+  const [cases, setCases] = useState<TNRCase[]>(MOCK_CASES);
   const filters: FilterTab[] = ['All', 'Pending', 'In Progress', 'Completed'];
 
-  const reported = MOCK_CASES.length;
-  const inProgress = MOCK_CASES.filter(c => c.status === 'In Progress').length;
-  const completed = MOCK_CASES.filter(c => c.status === 'Done').length;
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const res = await fetch(`${Config.API_BASE_URL}/reports`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: TNRCase[] = data.map((r: any) => ({
+            id: r.id,
+            title: r.notes || 'Untitled',
+            location: r.address || 'Unknown',
+            reportedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+            status: r.status === 'open' ? 'Pending' : r.status === 'in_progress' ? 'In Progress' : 'Done',
+            stepsCompleted: r.status === 'open' ? 1 : r.status === 'in_progress' ? 2 : 4,
+            totalSteps: 4,
+          }));
+          setCases(mapped);
+        }
+      } catch (e) {
+        // Keep mock data as fallback
+        console.log('Using mock TNR cases:', e);
+      }
+    };
+    fetchCases();
+  }, []);
+
+  const reported = cases.length;
+  const inProgress = cases.filter(c => c.status === 'In Progress').length;
+  const completed = cases.filter(c => c.status === 'Done').length;
 
   const filtered =
     activeFilter === 'All'
-      ? MOCK_CASES
-      : MOCK_CASES.filter(c => {
+      ? cases
+      : cases.filter(c => {
           if (activeFilter === 'Completed') return c.status === 'Done';
           return c.status === activeFilter;
         });
@@ -565,7 +594,40 @@ function ReportCaseScreen({ onBack }: { onBack: () => void }) {
         </View>
 
         {/* Submit button — moves with scroll */}
-        <TouchableOpacity style={[styles.reportButton, { marginTop: 24 }]} activeOpacity={0.85} onPress={onBack}>
+        <TouchableOpacity style={[styles.reportButton, { marginTop: 24 }]} activeOpacity={0.85} onPress={async () => {
+          if (!description.trim()) {
+            Alert.alert('Required', 'Please add a description.');
+            return;
+          }
+          if (!selectedLocation && !address) {
+            Alert.alert('Required', 'Please provide a location.');
+            return;
+          }
+          try {
+            const payload = {
+              lat: selectedLocation?.latitude || null,
+              lng: selectedLocation?.longitude || null,
+              address: address || '',
+              notes: description,
+              activityType: 'tnr',
+            };
+            const res = await fetch(`${Config.API_BASE_URL}/report`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            if (res.ok) {
+              Alert.alert('Success', 'Your report has been submitted!');
+              onBack();
+            } else {
+              const err = await res.json().catch(() => ({}));
+              Alert.alert('Error', err.error || 'Failed to submit report. Please try again.');
+            }
+          } catch (e) {
+            Alert.alert('Error', 'Network error. Please check your connection and try again.');
+            console.log('Report submission error:', e);
+          }
+        }}>
           <Text style={styles.reportButtonText}>✈ Submit Report</Text>
         </TouchableOpacity>
         <Text style={[styles.requiredNote, { marginTop: 8, marginBottom: 20 }]}>Fields marked with * are required</Text>
@@ -581,6 +643,12 @@ function ReportCaseScreen({ onBack }: { onBack: () => void }) {
 type Screen = 'tnr-with-cases' | 'tnr-empty' | 'report-case';
 
 export default function App() {
+  // Check if user is NGO/Vet — show their TNR management screen instead
+  const role = (global as any).__pawven_role;
+  if (role === 'ngo' || role === 'vet') {
+    return <TNRReportCasesScreen />;
+  }
+
   const [screen, setScreen] = useState<Screen>('tnr-with-cases');
   // Toggle below to test empty state: 'tnr-empty'
 
