@@ -40,9 +40,9 @@ const POSTS: Post[] = [
   { id: 'p20', orgId: 'KucingCare', text: '🐾 Rescued a limping cat near Gurney Drive. Now at the vet getting checked. Updates soon.', time: '1 week ago', likes: 36, comments: 7 },
 
   // ─── Dr Priya Sharma ───────────────────────────────────────────────
-  { id: 'p21', orgId: 'Dr Priya Sharma', text: '🩺 Busy day — 6 sterilisations completed. These community cats won't contribute to overpopulation now.', time: '6 hours ago', likes: 22, comments: 4 },
-  { id: 'p22', orgId: 'Dr Priya Sharma', text: '⚕️ Tip: If you find an injured stray, keep it warm and bring it to any vet. Don't try to treat wounds yourself.', time: '1 day ago', likes: 48, comments: 13 },
-  { id: 'p23', orgId: 'Dr Priya Sharma', text: '🐱 Post-op check on our TNR cats — all recovering well! They'll be returned to colony tomorrow.', time: '3 days ago', likes: 31, comments: 6 },
+  { id: 'p21', orgId: 'Dr Priya Sharma', text: '🩺 Busy day — 6 sterilisations completed. These community cats will not contribute to overpopulation now.', time: '6 hours ago', likes: 22, comments: 4 },
+  { id: 'p22', orgId: 'Dr Priya Sharma', text: '⚕️ Tip: If you find an injured stray, keep it warm and bring it to any vet. Do not try to treat wounds yourself.', time: '1 day ago', likes: 48, comments: 13 },
+  { id: 'p23', orgId: 'Dr Priya Sharma', text: '🐱 Post-op check on our TNR cats — all recovering well! They will be returned to colony tomorrow.', time: '3 days ago', likes: 31, comments: 6 },
   { id: 'p24', orgId: 'Dr Priya Sharma', text: '📋 Free health screening for community cats this Saturday at my PJ clinic. Slots filling fast!', time: '4 days ago', likes: 39, comments: 8 },
   { id: 'p25', orgId: 'Dr Priya Sharma', text: '💊 Reminder: Deworming your community cats every 3 months prevents serious health issues.', time: '1 week ago', likes: 25, comments: 3 },
 
