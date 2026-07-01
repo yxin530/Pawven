@@ -8,23 +8,53 @@ import {
   SafeAreaView,
   Alert,
   Image,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Config } from '@/constants/Config';
+import { getPostsByOrg, Post } from '@/data/posts';
 
 export default function NGOVetProfileScreen() {
   const router = useRouter();
   const role = (global as any).__pawven_role === 'vet' ? 'Vet' : 'NGO';
-  const orgName = (global as any).__pawven_name || (role === 'Vet' ? 'Dr. Lim Cat Clinic' : 'Paws & Care NGO');
+
+  const [name, setName] = useState<string>(
+    (global as any).__pawven_name || (role === 'Vet' ? 'Dr. Lim Cat Clinic' : 'Paws & Care NGO')
+  );
+  const [bio, setBio] = useState<string>(
+    (global as any).__pawven_bio || 'No bio yet. Tap Edit Profile to add one.'
+  );
+  const [avatar, setAvatar] = useState<string>(
+    (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=ngo&size=160'
+  );
 
   const [feederData, setFeederData] = useState([
     { name: 'No feeders yet', kibbles: '—', lastFed: '—' },
   ]);
   const [followers, setFollowers] = useState(0);
-  const [colonies, setColonies] = useState(0);
   const [feedersCount, setFeedersCount] = useState(0);
-  const [feedings, setFeedings] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  // Posts state
+  const [localPosts, setLocalPosts] = useState<{ id: string; text: string; time: string; likes: number; comments: number }[]>([]);
+  const [orgPosts, setOrgPosts] = useState<Post[]>([]);
+
+  // Edit Profile Modal
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState(name);
+  const [editBio, setEditBio] = useState(bio);
+  const [editAvatar, setEditAvatar] = useState(avatar);
+
+  // Post Creation Modal
+  const [postModalVisible, setPostModalVisible] = useState(false);
+  const [newPostText, setNewPostText] = useState('');
+
+  useEffect(() => {
+    const existing = getPostsByOrg(name);
+    setOrgPosts(existing);
+  }, [name]);
 
   useEffect(() => {
     const fetchFeeders = async () => {
@@ -62,27 +92,78 @@ export default function NGOVetProfileScreen() {
     return `${diffDays}d ago`;
   };
 
-  const handleEditProfile = async () => {
-    Alert.alert('Upload Photo', 'Choose how you want to upload', [
-      {
-        text: 'Choose from Gallery',
-        onPress: async () => {
-          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (status !== 'granted') { Alert.alert('Permission Required', 'We need gallery access.'); return; }
-          await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-        },
-      },
-      {
-        text: 'Take Photo',
-        onPress: async () => {
-          const { status } = await ImagePicker.requestCameraPermissionsAsync();
-          if (status !== 'granted') { Alert.alert('Permission Required', 'We need camera access.'); return; }
-          await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-        },
-      },
+  const totalPosts = localPosts.length + orgPosts.length;
+
+  // A) Contact button handler
+  const handleContact = () => {
+    Alert.alert('Contact Us', 'How would you like to reach us?', [
+      { text: 'WhatsApp', onPress: () => Alert.alert('WhatsApp', '+60 12-345 6789') },
+      { text: 'Email', onPress: () => Alert.alert('Email', 'contact@pawven.org') },
       { text: 'Cancel', style: 'cancel' },
     ]);
   };
+
+  // B) Follow toggle
+  const handleFollowToggle = () => {
+    if (isFollowing) {
+      setFollowers((prev) => prev - 1);
+      setIsFollowing(false);
+    } else {
+      setFollowers((prev) => prev + 1);
+      setIsFollowing(true);
+    }
+  };
+
+  // C) Edit Profile - open modal
+  const handleEditProfile = () => {
+    setEditName(name);
+    setEditBio(bio);
+    setEditAvatar(avatar);
+    setEditModalVisible(true);
+  };
+
+  const handleEditSave = () => {
+    setName(editName);
+    setBio(editBio);
+    setAvatar(editAvatar);
+    (global as any).__pawven_name = editName;
+    (global as any).__pawven_bio = editBio;
+    (global as any).__pawven_avatar = editAvatar;
+    setEditModalVisible(false);
+  };
+
+  const handleChangeAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need gallery access to change your avatar.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setEditAvatar(result.assets[0].uri);
+    }
+  };
+
+  // D) Post creation
+  const handleCreatePost = () => {
+    if (!newPostText.trim()) return;
+    const post = {
+      id: `local_${Date.now()}`,
+      text: newPostText.trim(),
+      time: 'just now',
+      likes: 0,
+      comments: 0,
+    };
+    setLocalPosts((prev) => [post, ...prev]);
+    setNewPostText('');
+    setPostModalVisible(false);
+  };
+
+  const allPosts = [...localPosts, ...orgPosts];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -98,25 +179,51 @@ export default function NGOVetProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <View style={styles.avatarCircle}>
-            <Image source={{ uri: (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=ngo&size=160' }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+            <Image source={{ uri: avatar }} style={{ width: 80, height: 80, borderRadius: 40 }} />
           </View>
         </View>
 
         {/* Profile Info */}
         <View style={styles.profileInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.orgName}>{orgName}</Text>
-            <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>Certified {role}</Text></View>
+            <Text style={styles.orgName}>{name}</Text>
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedBadgeText}>✅ Certified {role}</Text>
+            </View>
           </View>
           <Text style={styles.locationText}>📍 Kuala Lumpur, Malaysia</Text>
-          <Text style={styles.bioText}>{(global as any).__pawven_bio || 'No bio yet. Tap Edit Profile to add one.'}</Text>
+          <Text style={styles.bioText}>{bio}</Text>
+        </View>
+
+        {/* Contact & Follow Buttons */}
+        <View style={styles.contactFollowRow}>
+          <TouchableOpacity style={styles.contactBtn} onPress={handleContact}>
+            <Text style={styles.contactBtnText}>📞 Contact</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.followBtn, isFollowing && styles.followingBtn]}
+            onPress={handleFollowToggle}
+          >
+            <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
+              {isFollowing ? '✓ Following' : '+ Follow'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <View style={styles.statItem}><Text style={styles.statNumber}>{followers}</Text><Text style={styles.statLabel}>Followers</Text></View>
-          <View style={[styles.statItem, styles.statItemBorder]}><Text style={styles.statNumber}>{feedersCount}</Text><Text style={styles.statLabel}>Feeders</Text></View>
-          <View style={styles.statItem}><Text style={styles.statNumber}>{feedings}</Text><Text style={styles.statLabel}>Feedings</Text></View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{followers}</Text>
+            <Text style={styles.statLabel}>Followers</Text>
+          </View>
+          <View style={[styles.statItem, styles.statItemBorder]}>
+            <Text style={styles.statNumber}>{totalPosts}</Text>
+            <Text style={styles.statLabel}>Posts</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{feedersCount}</Text>
+            <Text style={styles.statLabel}>Feeders</Text>
+          </View>
         </View>
 
         {/* Action Buttons */}
@@ -149,22 +256,106 @@ export default function NGOVetProfileScreen() {
         {/* Posts Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📝 Posts</Text>
-          <View style={styles.createPostRow}>
+
+          {/* D) Post creation bar */}
+          <TouchableOpacity style={styles.createPostRow} onPress={() => setPostModalVisible(true)}>
             <View style={styles.smallAvatar}>
-              <Image source={{ uri: 'https://api.dicebear.com/9.x/avataaars/png?seed=ngo&size=80' }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+              <Image source={{ uri: avatar }} style={{ width: 40, height: 40, borderRadius: 20 }} />
             </View>
             <View style={styles.createPostInput}>
-              <Text style={styles.createPostPlaceholder}>Share an update or feeding activity…</Text>
+              <Text style={styles.createPostPlaceholder}>Share an update...</Text>
             </View>
-          </View>
-          {/* No existing posts — empty state */}
-          <View style={styles.emptyPosts}>
-            <Text style={styles.emptyPostsText}>No posts yet. Share your first update!</Text>
-          </View>
+          </TouchableOpacity>
+
+          {/* E) Posts Display */}
+          {allPosts.length === 0 ? (
+            <View style={styles.emptyPosts}>
+              <Text style={styles.emptyPostsText}>No posts yet. Share your first update!</Text>
+            </View>
+          ) : (
+            allPosts.map((post) => (
+              <View key={post.id} style={styles.postCard}>
+                <Text style={styles.postText}>{post.text}</Text>
+                <View style={styles.postMeta}>
+                  <Text style={styles.postTime}>{post.time}</Text>
+                  <Text style={styles.postStats}>❤️ {post.likes}  💬 {post.comments}</Text>
+                </View>
+              </View>
+            ))
+          )}
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* C) Edit Profile Modal */}
+      <Modal visible={editModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Profile</Text>
+
+            <TouchableOpacity style={styles.avatarEditBtn} onPress={handleChangeAvatar}>
+              <Image source={{ uri: editAvatar }} style={styles.avatarEditImg} />
+              <Text style={styles.avatarEditLabel}>📷 Change Avatar</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.inputLabel}>Name</Text>
+            <TextInput
+              style={styles.textInput}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Enter name"
+            />
+
+            <Text style={styles.inputLabel}>Bio</Text>
+            <TextInput
+              style={[styles.textInput, styles.textAreaInput]}
+              value={editBio}
+              onChangeText={setEditBio}
+              placeholder="Enter bio"
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setEditModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSaveBtn} onPress={handleEditSave}>
+                <Text style={styles.modalSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* D) Post Creation Modal */}
+      <Modal visible={postModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create Post</Text>
+
+            <TextInput
+              style={[styles.textInput, styles.textAreaInput]}
+              value={newPostText}
+              onChangeText={setNewPostText}
+              placeholder="What's on your mind?"
+              multiline
+              numberOfLines={4}
+              autoFocus
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setPostModalVisible(false); setNewPostText(''); }}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSaveBtn} onPress={handleCreatePost}>
+                <Text style={styles.modalSaveText}>Post</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -181,11 +372,18 @@ const styles = StyleSheet.create({
   avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#fff', borderWidth: 3, borderColor: '#fff', overflow: 'hidden', elevation: 2 },
   profileInfo: { paddingHorizontal: 16, marginTop: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  orgName: { fontSize: 22, fontWeight: '700', color: '#111' },
+  orgName: { fontSize: 22, fontWeight: '700', color: '#111', flexShrink: 1 },
   verifiedBadge: { backgroundColor: '#f0f0f0', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
   verifiedBadgeText: { fontSize: 12, fontWeight: '600', color: '#6b6b6b' },
   locationText: { fontSize: 14, color: '#6b6b6b', marginTop: 6 },
   bioText: { fontSize: 14, lineHeight: 21, color: '#111', marginTop: 12 },
+  contactFollowRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, gap: 12 },
+  contactBtn: { flex: 1, backgroundColor: '#f0f0f0', paddingVertical: 12, borderRadius: 24, alignItems: 'center' },
+  contactBtnText: { fontSize: 14, fontWeight: '600', color: '#111' },
+  followBtn: { flex: 1, backgroundColor: '#111', paddingVertical: 12, borderRadius: 24, alignItems: 'center' },
+  followBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  followingBtn: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#111' },
+  followingBtnText: { color: '#111' },
   statsRow: { flexDirection: 'row', marginTop: 20, paddingVertical: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#e9e9e9' },
   statItem: { flex: 1, alignItems: 'center' },
   statItemBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#e9e9e9' },
@@ -211,4 +409,24 @@ const styles = StyleSheet.create({
   createPostPlaceholder: { fontSize: 14, color: '#9a9a9a' },
   emptyPosts: { alignItems: 'center', paddingVertical: 24, backgroundColor: '#f9f9f9', borderRadius: 12 },
   emptyPostsText: { fontSize: 13, color: '#999' },
+  postCard: { backgroundColor: '#f9f9f9', borderRadius: 12, padding: 14, marginBottom: 12 },
+  postText: { fontSize: 14, color: '#111', lineHeight: 20 },
+  postMeta: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  postTime: { fontSize: 12, color: '#999' },
+  postStats: { fontSize: 12, color: '#6b6b6b' },
+  // Modal styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '100%', maxHeight: '80%' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 20, textAlign: 'center' },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: '#6b6b6b', marginBottom: 6, marginTop: 12 },
+  textInput: { borderWidth: 1, borderColor: '#e9e9e9', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#111', backgroundColor: '#f9f9f9' },
+  textAreaInput: { minHeight: 80, textAlignVertical: 'top' },
+  modalActions: { flexDirection: 'row', marginTop: 24, gap: 12 },
+  modalCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 24, borderWidth: 1, borderColor: '#e9e9e9', alignItems: 'center' },
+  modalCancelText: { fontSize: 14, fontWeight: '600', color: '#6b6b6b' },
+  modalSaveBtn: { flex: 1, paddingVertical: 14, borderRadius: 24, backgroundColor: '#111', alignItems: 'center' },
+  modalSaveText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  avatarEditBtn: { alignItems: 'center', marginBottom: 8 },
+  avatarEditImg: { width: 72, height: 72, borderRadius: 36, marginBottom: 8 },
+  avatarEditLabel: { fontSize: 13, color: '#111', fontWeight: '600' },
 });
