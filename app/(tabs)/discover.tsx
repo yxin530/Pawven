@@ -22,7 +22,9 @@ const FEEDERS = [
 
 const COMMUNITY_POSTS = [
   { id: 'event_003', type: 'photo', time: 'Aug 15', title: 'Colony Count in Pasir Ris', participants: 22, likes: 0 },
-  { id: 'community_001', type: 'text', icon: '📣', name: 'SPCA Volunteers SG', desc: 'Volunteer coordination, rescue updates and adoption events across Singapore.', time: 'Active' },
+  { id: 'community_001', type: 'text', icon: '🐾', name: 'SPCA Singapore', desc: 'Improving animal welfare through rescue, education and responsible pet ownership.', time: 'Active' },
+  { id: 'community_002', type: 'text', icon: '👥', name: 'SPCA Selangor', desc: 'Protecting and caring for abandoned cats through rescue, adoption, education and community feeding.', time: 'Active' },
+  { id: 'community_003', type: 'text', icon: '🩺', name: 'Vets for Strays', desc: 'Veterinarians and volunteers sharing medical resources for stray animals.', time: 'Active' },
 ];
 
 const NGOS = [

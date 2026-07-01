@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Config } from '@/constants/Config';
+import { getPostsByOrg } from '@/data/posts';
 
 export default function OrgProfileScreen() {
   const router = useRouter();
@@ -101,12 +102,24 @@ export default function OrgProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Posts - empty */}
+        {/* Posts */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Posts</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No posts yet</Text>
-          </View>
+          {getPostsByOrg(orgName).length > 0 ? (
+            getPostsByOrg(orgName).map(post => (
+              <View key={post.id} style={styles.postCard}>
+                <Text style={styles.postText}>{post.text}</Text>
+                <View style={styles.postFooter}>
+                  <Text style={styles.postTime}>{post.time}</Text>
+                  <Text style={styles.postStats}>🤍 {post.likes}  💬 {post.comments}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No posts yet</Text>
+            </View>
+          )}
         </View>
 
         <View style={{ height: 80 }} />
@@ -145,4 +158,9 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 12 },
   emptyState: { paddingVertical: 40, alignItems: 'center', borderWidth: 1, borderColor: '#e9e9e9', borderRadius: 12 },
   emptyStateText: { fontSize: 14, color: '#999' },
+  postCard: { borderWidth: 1, borderColor: '#e9e9e9', borderRadius: 12, padding: 14, marginBottom: 10 },
+  postText: { fontSize: 14, lineHeight: 20, color: '#222' },
+  postFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  postTime: { fontSize: 12, color: '#999' },
+  postStats: { fontSize: 12, color: '#999' },
 });

@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { getPostsByOrg } from '@/data/posts';
 
 export default function CommunityProfileScreen() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function CommunityProfileScreen() {
   const locationArea = params.location || '';
 
   const [isFollowing, setIsFollowing] = useState(false);
+  const posts = getPostsByOrg(communityName);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -88,14 +90,26 @@ export default function CommunityProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Posts - empty */}
+        {/* Posts */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Posts</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateEmoji}>📝</Text>
-            <Text style={styles.emptyStateText}>No posts yet</Text>
-            <Text style={styles.emptyStateSubtext}>This community hasn't shared any updates.</Text>
-          </View>
+          {posts.length > 0 ? (
+            posts.map(post => (
+              <View key={post.id} style={styles.postCard}>
+                <Text style={styles.postText}>{post.text}</Text>
+                <View style={styles.postFooter}>
+                  <Text style={styles.postTime}>{post.time}</Text>
+                  <Text style={styles.postStats}>🤍 {post.likes}  💬 {post.comments}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>📝</Text>
+              <Text style={styles.emptyStateText}>No posts yet</Text>
+              <Text style={styles.emptyStateSubtext}>This community hasn't shared any updates.</Text>
+            </View>
+          )}
         </View>
 
         {/* Members preview */}
@@ -153,4 +167,9 @@ const styles = StyleSheet.create({
   membersRow: { flexDirection: 'row', alignItems: 'center' },
   memberAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#fff' },
   membersMore: { fontSize: 13, color: '#666', marginLeft: 12 },
+  postCard: { borderWidth: 1, borderColor: '#e9e9e9', borderRadius: 12, padding: 14, marginBottom: 10 },
+  postText: { fontSize: 14, lineHeight: 20, color: '#222' },
+  postFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  postTime: { fontSize: 12, color: '#999' },
+  postStats: { fontSize: 12, color: '#999' },
 });
