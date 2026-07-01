@@ -340,7 +340,7 @@ export default function HomeScreen() {
         {/* ── Upcoming Activities ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Upcoming Activities</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/listEvents')}>
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
@@ -356,7 +356,7 @@ export default function HomeScreen() {
         {/* ── Active Communities ── */}
         <View style={[styles.sectionHeader, { marginTop: 8 }]}>
           <Text style={styles.sectionTitle}>Active Communities</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/listCommunities')}>
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>

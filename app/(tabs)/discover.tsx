@@ -45,10 +45,10 @@ const FilterChip = ({ label, active, onPress }: { label: string; active: boolean
   </TouchableOpacity>
 );
 
-const SectionHeader = ({ title }: { title: string }) => (
+const SectionHeader = ({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) => (
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    <TouchableOpacity><Text style={styles.seeAll}>See all</Text></TouchableOpacity>
+    <TouchableOpacity onPress={onSeeAll}><Text style={styles.seeAll}>See all</Text></TouchableOpacity>
   </View>
 );
 
@@ -237,16 +237,16 @@ export default function DiscoverScreen() {
         </View>
 
         {/* Feeders */}
-        {(activeFilter === 'All' || activeFilter === 'Feeder') && (<><SectionHeader title="Feeders" /><View style={styles.card}>{feeders.map((item: any, idx: number) => (<View key={item.id}><FeederRow item={item} />{idx < feeders.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
+        {(activeFilter === 'All' || activeFilter === 'Feeder') && (<><SectionHeader title="Feeders" onSeeAll={() => router.push('/listFeeders')} /><View style={styles.card}>{feeders.map((item: any, idx: number) => (<View key={item.id}><FeederRow item={item} />{idx < feeders.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
 
         {/* Communities */}
-        {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" />{communityPosts.filter(p => p.type === 'photo').slice(0, 3).map((item: any) => <CommunityPhotoPost key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.time } })} />)}{communityPosts.filter(p => p.type === 'text').slice(0, 2).map((item: any) => <CommunityTextPost key={item.id} item={item} />)}</>)}
+        {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" onSeeAll={() => router.push('/listCommunities')} />{communityPosts.filter(p => p.type === 'photo').slice(0, 3).map((item: any) => <CommunityPhotoPost key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.time } })} />)}{communityPosts.filter(p => p.type === 'text').slice(0, 2).map((item: any) => <CommunityTextPost key={item.id} item={item} />)}</>)}
 
         {/* NGOs */}
-        {(activeFilter === 'All' || activeFilter === 'NGOs') && (<><SectionHeader title="NGOs" /><View style={styles.ngoRow}>{orgs.map((item: any) => <NgoCard key={item.id} item={item} />)}</View></>)}
+        {(activeFilter === 'All' || activeFilter === 'NGOs') && (<><SectionHeader title="NGOs" onSeeAll={() => router.push('/listNgos')} /><View style={styles.ngoRow}>{orgs.map((item: any) => <NgoCard key={item.id} item={item} />)}</View></>)}
 
         {/* Vets */}
-        {activeFilter === 'All' && (<><SectionHeader title="Vets" /><View style={styles.card}>{vets.map((item: any, idx: number) => (<View key={item.id}><VetRow item={item} />{idx < vets.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
+        {activeFilter === 'All' && (<><SectionHeader title="Vets" onSeeAll={() => router.push('/listVets')} /><View style={styles.card}>{vets.map((item: any, idx: number) => (<View key={item.id}><VetRow item={item} />{idx < vets.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
 
         <View style={{ height: 100 }} />
       </ScrollView>
