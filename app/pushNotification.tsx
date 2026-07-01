@@ -6,6 +6,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -13,8 +14,14 @@ export default function PushNotificationScreen() {
   const router = useRouter();
 
   const handleEnable = () => {
-    // In production: request push notification permissions here
-    router.replace('/(tabs)/home');
+    Alert.alert(
+      'Turn On Notifications',
+      'Pawven would like to send you notifications about feeding updates, TNR cases, and community activity.',
+      [
+        { text: 'Allow', onPress: () => router.replace('/(tabs)/home') },
+        { text: 'Not Now', style: 'cancel', onPress: () => router.replace('/(tabs)/home') },
+      ]
+    );
   };
 
   const handleSkip = () => {
@@ -24,6 +31,12 @@ export default function PushNotificationScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
+        {/* Progress dots */}
+        <View style={styles.progressRow}>
+          <View style={styles.progressDot} />
+          <View style={styles.progressDot} />
+          <View style={[styles.progressDot, styles.progressDotActive]} />
+        </View>
         {/* Card stack visual */}
         <View style={styles.cardStack}>
           <View style={[styles.cardBehind, { transform: [{ translateX: 10 }, { translateY: 6 }] }]} />
@@ -59,7 +72,10 @@ export default function PushNotificationScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#000' },
-  content: { flex: 1, alignItems: 'center', paddingHorizontal: 32, paddingTop: 120 },
+  content: { flex: 1, alignItems: 'center', paddingHorizontal: 32, paddingTop: 60 },
+  progressRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 60 },
+  progressDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
+  progressDotActive: { backgroundColor: '#FFFFFF', width: 24 },
   cardStack: { width: 180, height: 100, alignItems: 'center', justifyContent: 'center', marginBottom: 48 },
   cardBehind: { position: 'absolute', width: 160, height: 68, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.9)' },
   cardFront: { width: 160, height: 68, borderRadius: 14, backgroundColor: '#FFF', paddingHorizontal: 14, paddingVertical: 12, justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },

@@ -62,6 +62,13 @@ export default function CreateProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {/* Progress dots */}
+        <View style={styles.progressRow}>
+          <View style={styles.progressDot} />
+          <View style={[styles.progressDot, styles.progressDotActive]} />
+          <View style={styles.progressDot} />
+        </View>
+
         {/* Avatar */}
         <View style={[styles.avatarWrapper, { marginTop: 24 }]}>
           {avatarUri ? (
@@ -115,6 +122,9 @@ export default function CreateProfileScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FAFAFA' },
+  progressRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingTop: 16, marginBottom: 8 },
+  progressDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E0E0E0' },
+  progressDotActive: { backgroundColor: '#111111', width: 24 },
   headerBackground: { height: 160, backgroundColor: '#F1F1F3', overflow: 'hidden' },
   dragHandle: { alignSelf: 'center', marginTop: 10, width: 36, height: 4, borderRadius: 2, backgroundColor: '#C7C7CC' },
   sparkle: { position: 'absolute', fontSize: 12, color: '#8A8A8E' },
