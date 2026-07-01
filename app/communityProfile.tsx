@@ -66,7 +66,7 @@ export default function CommunityProfileScreen() {
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={[styles.statItem, styles.statBorder]}>
-            <Text style={styles.statNumber}>{postsCount}</Text>
+            <Text style={styles.statNumber}>{posts.length}</Text>
             <Text style={styles.statLabel}>Posts</Text>
           </View>
           <View style={styles.statItem}>

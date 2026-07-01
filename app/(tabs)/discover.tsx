@@ -28,13 +28,13 @@ const COMMUNITY_POSTS = [
 ];
 
 const NGOS = [
-  { id: 'ngo_001', name: 'SPCA Selangor', volunteers: '183 volunteers', icon: '🏢', following: false },
-  { id: 'ngo_003', name: 'Cat Welfare SG', volunteers: '148 volunteers', icon: '🐾', following: false },
+  { id: 'ngo_001', name: 'SPCA Selangor', volunteers: '183 volunteers', icon: '🏢', following: false, followers: '5231' },
+  { id: 'ngo_003', name: 'Cat Welfare SG', volunteers: '148 volunteers', icon: '🐾', following: false, followers: '8120' },
 ];
 
 const VETS = [
-  { id: 'vet_001', name: 'Dr Priya Sharma', clinic: 'Petaling Jaya · 10 AM - 7 PM', rating: '4.9', specialty: 'Community cats & rescue' },
-  { id: 'vet_002', name: 'Dr Kevin Ong', clinic: 'Bukit Mertajam · 9 AM - 6 PM', rating: '4.8', specialty: 'Surgery & rescue medicine' },
+  { id: 'vet_001', name: 'Dr Priya Sharma', clinic: 'Petaling Jaya · 10 AM - 7 PM', rating: '4.9', specialty: 'Community cats & rescue', followers: '1623' },
+  { id: 'vet_002', name: 'Dr Kevin Ong', clinic: 'Bukit Mertajam · 9 AM - 6 PM', rating: '4.8', specialty: 'Surgery & rescue medicine', followers: '2148' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ const NgoCard = ({ item }: { item: any }) => {
   const [following, setFollowing] = useState(item.following);
   const router = useRouter();
   return (
-    <TouchableOpacity style={styles.ngoCard} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'ngo', volunteers: item.volunteers || '0' } })} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.ngoCard} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'ngo', volunteers: item.volunteers || '0', followers: item.followers || '0' } })} activeOpacity={0.85}>
       <View style={styles.ngoIcon}><Text style={{ fontSize: 22 }}>{item.icon}</Text></View>
       <Text style={styles.ngoName}>{item.name}</Text>
       <Text style={styles.ngoVolunteers}>{item.volunteers}</Text>
@@ -126,7 +126,7 @@ const NgoCard = ({ item }: { item: any }) => {
 const VetRow = ({ item }: { item: any }) => {
   const router = useRouter();
   return (
-    <TouchableOpacity style={styles.vetRow} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'vet', volunteers: item.rating ? `⭐ ${item.rating}` : '0' } })} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.vetRow} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'vet', volunteers: item.rating ? `⭐ ${item.rating}` : '0', followers: item.followers || '0' } })} activeOpacity={0.85}>
       <View style={styles.vetAvatar}><Text style={{ fontSize: 20 }}>🩺</Text></View>
       <View style={styles.vetInfo}>
         <Text style={styles.vetName}>{item.name}</Text>
@@ -173,10 +173,10 @@ export default function DiscoverScreen() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           const ngoList = data.filter((o: any) => o.type === 'ngo').map((o: any) => ({
-            id: o.id, name: o.name, volunteers: '—', icon: '🏢', following: false,
+            id: o.id, name: o.name, volunteers: '—', icon: '🏢', following: false, followers: '0',
           }));
           const vetList = data.filter((o: any) => o.type === 'vet').map((o: any) => ({
-            id: o.id, name: o.name, clinic: `${o.address} · ${o.hours}`, rating: '4.8', specialty: o.description?.slice(0, 30) || '',
+            id: o.id, name: o.name, clinic: `${o.address} · ${o.hours}`, rating: '4.8', specialty: o.description?.slice(0, 30) || '', followers: '0',
           }));
           if (ngoList.length) setOrgs(ngoList);
           if (vetList.length) setVets(vetList);

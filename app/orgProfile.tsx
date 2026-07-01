@@ -14,14 +14,14 @@ import { getPostsByOrg } from '@/data/posts';
 
 export default function OrgProfileScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string; name?: string; type?: string; volunteers?: string }>();
+  const params = useLocalSearchParams<{ id?: string; name?: string; type?: string; volunteers?: string; followers?: string }>();
 
   const orgId = params.id || '';
   const [orgName, setOrgName] = useState(params.name || 'Organization');
   const [orgType, setOrgType] = useState(params.type || 'ngo');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
-  const [followers, setFollowers] = useState(0);
+  const [followers, setFollowers] = useState(parseInt(params.followers || '0', 10) || 0);
   const [volunteersLabel, setVolunteersLabel] = useState(params.volunteers || '0');
   const [logoUrl, setLogoUrl] = useState('');
 
@@ -87,7 +87,7 @@ export default function OrgProfileScreen() {
             <Text style={styles.statLabel}>{orgType === 'vet' ? 'Rating' : 'Volunteers'}</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statNumber}>{getPostsByOrg(orgName).length}</Text>
             <Text style={styles.statLabel}>Posts</Text>
           </View>
         </View>
