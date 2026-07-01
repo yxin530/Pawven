@@ -38,7 +38,7 @@ export default function NGOVetProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   // Posts state
-  const [localPosts, setLocalPosts] = useState<{ id: string; text: string; time: string; likes: number; comments: number }[]>([]);
+  const [localPosts, setLocalPosts] = useState<{ id: string; text: string; image?: string; time: string; likes: number; comments: number }[]>([]);
   const [orgPosts, setOrgPosts] = useState<Post[]>([]);
 
   // Edit Profile Modal
@@ -148,19 +148,57 @@ export default function NGOVetProfileScreen() {
     }
   };
 
-  // D) Post creation
+  // D) Post creation with image/video
+  const [postImageUri, setPostImageUri] = useState<string | null>(null);
+
+  const handlePickPostMedia = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need gallery access.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setPostImageUri(result.assets[0].uri);
+    }
+  };
+
   const handleCreatePost = () => {
-    if (!newPostText.trim()) return;
+    if (!newPostText.trim() && !postImageUri) return;
     const post = {
       id: `local_${Date.now()}`,
       text: newPostText.trim(),
+      image: postImageUri || undefined,
       time: 'just now',
       likes: 0,
       comments: 0,
     };
     setLocalPosts((prev) => [post, ...prev]);
     setNewPostText('');
+    setPostImageUri(null);
     setPostModalVisible(false);
+  };
+
+  // Cover photo state
+  const [coverPhotoUri, setCoverPhotoUri] = useState<string | null>(null);
+
+  const handleChangeCover = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need gallery access.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setCoverPhotoUri(result.assets[0].uri);
+    }
   };
 
   const allPosts = [...localPosts, ...orgPosts];
@@ -170,7 +208,11 @@ export default function NGOVetProfileScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Cover Photo */}
         <View style={styles.coverPhoto}>
-          <Text style={styles.coverPhotoLabel}>Cover Photo</Text>
+          {coverPhotoUri ? (
+            <Image source={{ uri: coverPhotoUri }} style={{ width: '100%', height: '100%' }} />
+          ) : (
+            <Text style={styles.coverPhotoLabel}>Cover Photo</Text>
+          )}
           <TouchableOpacity style={styles.editProfileBtn} onPress={handleEditProfile}>
             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -284,9 +326,10 @@ export default function NGOVetProfileScreen() {
               <Text style={styles.emptyPostsText}>No posts yet. Share your first update!</Text>
             </View>
           ) : (
-            allPosts.map((post) => (
+            allPosts.map((post: any) => (
               <View key={post.id} style={styles.postCard}>
                 <Text style={styles.postText}>{post.text}</Text>
+                {post.image && <Image source={{ uri: post.image }} style={styles.postImage} />}
                 <View style={styles.postMeta}>
                   <Text style={styles.postTime}>{post.time}</Text>
                   <Text style={styles.postStats}>❤️ {post.likes}  💬 {post.comments}</Text>
@@ -308,6 +351,10 @@ export default function NGOVetProfileScreen() {
             <TouchableOpacity style={styles.avatarEditBtn} onPress={handleChangeAvatar}>
               <Image source={{ uri: editAvatar }} style={styles.avatarEditImg} />
               <Text style={styles.avatarEditLabel}>📷 Change Avatar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.coverEditBtn} onPress={handleChangeCover}>
+              <Text style={styles.coverEditLabel}>🖼️ Change Cover Photo</Text>
             </TouchableOpacity>
 
             <Text style={styles.inputLabel}>Name</Text>
@@ -350,14 +397,22 @@ export default function NGOVetProfileScreen() {
               style={[styles.textInput, styles.textAreaInput]}
               value={newPostText}
               onChangeText={setNewPostText}
-              placeholder="What's on your mind?"
+              placeholder="Write something..."
               multiline
               numberOfLines={4}
               autoFocus
             />
 
+            {postImageUri && (
+              <Image source={{ uri: postImageUri }} style={{ width: '100%', height: 160, borderRadius: 12, marginTop: 12 }} />
+            )}
+
+            <TouchableOpacity style={styles.mediaPickerBtn} onPress={handlePickPostMedia}>
+              <Text style={styles.mediaPickerBtnText}>📷 Add Photo / Video</Text>
+            </TouchableOpacity>
+
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setPostModalVisible(false); setNewPostText(''); }}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setPostModalVisible(false); setNewPostText(''); setPostImageUri(null); }}>
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalSaveBtn} onPress={handleCreatePost}>
@@ -440,4 +495,9 @@ const styles = StyleSheet.create({
   avatarEditBtn: { alignItems: 'center', marginBottom: 8 },
   avatarEditImg: { width: 72, height: 72, borderRadius: 36, marginBottom: 8 },
   avatarEditLabel: { fontSize: 13, color: '#111', fontWeight: '600' },
+  coverEditBtn: { alignItems: 'center', marginTop: 8, paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 12 },
+  coverEditLabel: { fontSize: 13, color: '#111', fontWeight: '600' },
+  mediaPickerBtn: { marginTop: 12, paddingVertical: 12, backgroundColor: '#f7f7f7', borderRadius: 12, alignItems: 'center' },
+  mediaPickerBtnText: { fontSize: 14, color: '#111', fontWeight: '500' },
+  postImage: { width: '100%', height: 180, borderRadius: 12, marginTop: 10 },
 });

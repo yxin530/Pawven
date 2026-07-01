@@ -21,20 +21,21 @@ const FEEDERS = [
 ];
 
 const COMMUNITY_POSTS = [
-  { id: 'event_003', type: 'photo', time: 'Aug 15', title: 'Colony Count in Pasir Ris', participants: 22, likes: 0 },
-  { id: 'community_001', type: 'text', icon: '🐾', name: 'SPCA Singapore', desc: 'Improving animal welfare through rescue, education and responsible pet ownership.', time: 'Active' },
+  { id: 'event_003', type: 'photo', time: 'Aug 15', title: 'Colony Count in Taman Desa', participants: 22, likes: 0 },
   { id: 'community_002', type: 'text', icon: '👥', name: 'SPCA Selangor', desc: 'Protecting and caring for abandoned cats through rescue, adoption, education and community feeding.', time: 'Active' },
   { id: 'community_003', type: 'text', icon: '🩺', name: 'Vets for Strays', desc: 'Veterinarians and volunteers sharing medical resources for stray animals.', time: 'Active' },
+  { id: 'community_004', type: 'text', icon: '🐾', name: 'KucingCare', desc: 'Local rescue initiative helping stray cats with feeding, treatment and adoption.', time: 'Active' },
 ];
 
 const NGOS = [
   { id: 'ngo_001', name: 'SPCA Selangor', volunteers: '183 volunteers', icon: '🏢', following: false, followers: '5231' },
-  { id: 'ngo_003', name: 'Cat Welfare SG', volunteers: '148 volunteers', icon: '🐾', following: false, followers: '8120' },
+  { id: 'ngo_004', name: 'KucingCare', volunteers: '91 volunteers', icon: '🐾', following: false, followers: '2789' },
 ];
 
 const VETS = [
   { id: 'vet_001', name: 'Dr Priya Sharma', clinic: 'Petaling Jaya · 10 AM - 7 PM', rating: '4.9', specialty: 'Community cats & rescue', followers: '1623' },
   { id: 'vet_002', name: 'Dr Kevin Ong', clinic: 'Bukit Mertajam · 9 AM - 6 PM', rating: '4.8', specialty: 'Surgery & rescue medicine', followers: '2148' },
+  { id: 'vet_003', name: 'Dr Lim Pet Clinic', clinic: 'Subang Jaya · 9 AM - 8 PM', rating: '4.7', specialty: 'Stray animal welfare', followers: '3578' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -167,15 +168,16 @@ export default function DiscoverScreen() {
       })
       .catch(() => {});
 
-    // Fetch organizations
+    // Fetch organizations (filter to Malaysia — lat > 1.5)
     fetch(`${Config.API_BASE_URL}/orgs`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const ngoList = data.filter((o: any) => o.type === 'ngo').map((o: any) => ({
+          const malaysiaOrgs = data.filter((o: any) => !o.lat || o.lat > 1.5);
+          const ngoList = malaysiaOrgs.filter((o: any) => o.type === 'ngo').map((o: any) => ({
             id: o.id, name: o.name, volunteers: '—', icon: '🏢', following: false, followers: '0',
           }));
-          const vetList = data.filter((o: any) => o.type === 'vet').map((o: any) => ({
+          const vetList = malaysiaOrgs.filter((o: any) => o.type === 'vet').map((o: any) => ({
             id: o.id, name: o.name, clinic: `${o.address} · ${o.hours}`, rating: '4.8', specialty: o.description?.slice(0, 30) || '', followers: '0',
           }));
           if (ngoList.length) setOrgs(ngoList);

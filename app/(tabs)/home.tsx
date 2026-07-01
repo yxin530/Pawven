@@ -89,9 +89,9 @@ const UPCOMING_ACTIVITIES = [
 ];
 
 const COMMUNITIES = [
-  { id: 'community_001', name: 'SPCA Singapore', members: '2.9k members', following: false, icon: '🐾', followers: '2913', posts: '5', bio: 'Improving animal welfare through rescue, education and responsible pet ownership.', location: 'Singapore' },
   { id: 'community_002', name: 'SPCA Selangor', members: '1.8k members', following: false, icon: '👥', followers: '1845', posts: '5', bio: 'Protecting and caring for abandoned cats through rescue, adoption, education and community feeding.', location: 'Malaysia · Selangor' },
   { id: 'community_003', name: 'Vets for Strays', members: '4.3k members', following: false, icon: '🩺', followers: '4261', posts: '5', bio: 'Veterinarians and volunteers sharing medical resources for stray animals.', location: 'Malaysia & Singapore' },
+  { id: 'community_004', name: 'KucingCare Community', members: '2.8k members', following: false, icon: '🐾', followers: '2789', posts: '5', bio: 'Local rescue initiative helping stray cats with feeding, treatment and adoption.', location: 'Malaysia · Penang' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
