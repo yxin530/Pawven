@@ -53,7 +53,7 @@ export default function OnboardingRoleScreen() {
       body: JSON.stringify({ role: selectedRole }),
     }).catch((e) => console.log('Role save failed (non-blocking):', e));
 
-    router.replace('/(tabs)/home');
+    router.push('/createProfile');
   };
 
   return (

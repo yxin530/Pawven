@@ -217,6 +217,11 @@ export default function DiscoverMapScreen() {
         <TouchableOpacity style={styles.locationBtn} onPress={() => setRegion(r => ({ ...r, latitude: 3.139, longitude: 101.6869 }))}>
           <Text style={styles.locationBtnText}>◎</Text>
         </TouchableOpacity>
+
+        {/* Create Event button */}
+        <TouchableOpacity style={styles.createEventBtn} onPress={() => router.push('/createEvent')}>
+          <Text style={styles.createEventBtnText}>+</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -265,4 +270,6 @@ const styles = StyleSheet.create({
   // Location
   locationBtn: { position: 'absolute', right: 16, top: 190, width: 44, height: 44, borderRadius: 12, backgroundColor: WHITE, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 },
   locationBtnText: { fontSize: 22, color: DARK },
+  createEventBtn: { position: 'absolute', bottom: 24, alignSelf: 'center', width: 56, height: 56, borderRadius: 28, backgroundColor: DARK, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 6 },
+  createEventBtnText: { fontSize: 28, color: WHITE, fontWeight: '300', lineHeight: 30 },
 });

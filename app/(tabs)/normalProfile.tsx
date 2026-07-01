@@ -109,7 +109,7 @@ export default function ProfileScreen() {
       <View style={styles.avatarWrapper}>
         <View style={styles.avatarCircle}>
           <Image
-            source={{ uri: 'https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=160' }}
+            source={{ uri: (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=160' }}
             style={styles.avatarImage}
           />
         </View>

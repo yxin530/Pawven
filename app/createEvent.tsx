@@ -83,19 +83,28 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   const isFormValid = eventName.trim().length > 0;
 
   const handlePickCoverPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.9,
-    });
-
-    if (!result.canceled && result.assets?.length) {
-      setCoverPhotoUri(result.assets[0].uri);
-    }
+    Alert.alert('Upload Cover Photo', 'Allow Pawven to access your photo gallery?', [
+      {
+        text: 'Allow',
+        onPress: async () => {
+          const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (!permission.granted) {
+            Alert.alert('Permission Denied', 'Gallery access is required to add a cover photo.');
+            return;
+          }
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.9,
+          });
+          if (!result.canceled && result.assets?.length) {
+            setCoverPhotoUri(result.assets[0].uri);
+          }
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const handleSubmit = async () => {
@@ -131,13 +140,9 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         {/* Header */}
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.profileBtn} onPress={() => router.back()}>
-            {profileAvatarUri ? (
-              <Image source={{ uri: profileAvatarUri }} style={styles.profileAvatarImg} />
-            ) : (
-              <View style={styles.profileAvatarPlaceholder}>
-                <Text style={styles.profileAvatarIcon}>👤</Text>
-              </View>
-            )}
+            <View style={styles.profileAvatarPlaceholder}>
+              <Text style={styles.profileAvatarIcon}>←</Text>
+            </View>
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>Create Event</Text>

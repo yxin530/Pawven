@@ -8,6 +8,8 @@ export default function RootLayout() {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="roleSelect" />
+      <Stack.Screen name="createProfile" />
+      <Stack.Screen name="pushNotification" />
       <Stack.Screen name="discoverMapScreen" />
       <Stack.Screen name="badgesScreen" />
       <Stack.Screen name="feederManagement" />
