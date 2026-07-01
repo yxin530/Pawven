@@ -16,18 +16,31 @@ import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
 
-type MapFilterKey = 'All' | 'Feeder' | 'Events' | 'NGOs' | 'Vets';
+type MapFilterKey = 'All' | 'Feeder' | 'Events' | 'NGOs' | 'Vets' | 'TNR';
 
-// ─── Mock pins with coordinates ───────────────────────────────────────────────
+// ─── Mock pins from JSON data ─────────────────────────────────────────────────
 const MAP_PINS = [
-  { id: '1', type: 'feeder', icon: '🍽️', lat: 3.139, lng: 101.6869, title: 'Taman Desa Feeder' },
-  { id: '2', type: 'community', icon: '👥', lat: 3.145, lng: 101.695, title: 'East Feeders Group' },
-  { id: '3', type: 'vet', icon: '🩺', lat: 3.132, lng: 101.680, title: 'Dr. Lim Clinic' },
-  { id: '4', type: 'feeder', icon: '🍽️', lat: 3.150, lng: 101.670, title: 'TTDI Feeder' },
-  { id: '5', type: 'ngo', icon: '🏢', lat: 3.128, lng: 101.690, title: 'SPCA Selangor' },
+  // NGOs (from NGO.json)
+  { id: 'ngo_001', type: 'ngo', icon: '🏢', lat: 3.155, lng: 101.765, title: 'SPCA Selangor' },
+  { id: 'ngo_002', type: 'ngo', icon: '🏢', lat: 1.328, lng: 103.870, title: 'SPCA Singapore' },
+  { id: 'ngo_003', type: 'ngo', icon: '🏢', lat: 1.334, lng: 103.851, title: 'Cat Welfare SG' },
+  { id: 'ngo_004', type: 'ngo', icon: '🏢', lat: 5.414, lng: 100.329, title: 'KucingCare' },
+  // Vets (from vets.json)
+  { id: 'vet_001', type: 'vet', icon: '🩺', lat: 3.107, lng: 101.607, title: 'Dr Priya Sharma' },
+  { id: 'vet_002', type: 'vet', icon: '🩺', lat: 5.363, lng: 100.460, title: 'Dr Kevin Ong' },
+  { id: 'vet_003', type: 'vet', icon: '🩺', lat: 3.049, lng: 101.586, title: 'Dr Lim Pet Clinic' },
+  // Feeders (from smartFeeders.json)
+  { id: 'feeder_001', type: 'feeder', icon: '🍽️', lat: 3.155, lng: 101.770, title: 'Cats Canteen' },
+  { id: 'feeder_002', type: 'feeder', icon: '🍽️', lat: 1.334, lng: 103.855, title: 'Home for Cats' },
+  { id: 'feeder_003', type: 'feeder', icon: '🍽️', lat: 3.107, lng: 101.670, title: 'Taman Desa Feeder' },
+  // Events (from events.json)
+  { id: 'event_001', type: 'community', icon: '📅', lat: 3.155, lng: 101.760, title: 'Workshop by SPCA' },
+  { id: 'event_002', type: 'community', icon: '📅', lat: 3.107, lng: 101.610, title: 'Vet Volunteer Day' },
+  { id: 'event_003', type: 'community', icon: '📅', lat: 1.373, lng: 103.949, title: 'Colony Count in Pasir Ris' },
+  { id: 'event_004', type: 'community', icon: '📅', lat: 5.414, lng: 100.325, title: 'Cat Owners Hangout' },
 ];
 
-const MAP_FILTERS: MapFilterKey[] = ['All', 'Feeder', 'Events', 'NGOs', 'Vets'];
+const MAP_FILTERS: MapFilterKey[] = ['All', 'Feeder', 'Events', 'NGOs', 'Vets', 'TNR'];
 
 // ─── Radar Pulse Component ────────────────────────────────────────────────────
 const RADAR_SIZE = 80;
@@ -86,10 +99,11 @@ export default function DiscoverMapScreen() {
   useEffect(() => {
     const fetchPins = async () => {
       try {
-        const [feedersRes, orgsRes, eventsRes] = await Promise.all([
+        const [feedersRes, orgsRes, eventsRes, tnrRes] = await Promise.all([
           fetch(`${Config.API_BASE_URL}/feeders`),
           fetch(`${Config.API_BASE_URL}/orgs`),
           fetch(`${Config.API_BASE_URL}/events`),
+          fetch(`${Config.API_BASE_URL}/reports`),
         ]);
         const newPins: typeof MAP_PINS = [];
         if (feedersRes.ok) {
@@ -124,12 +138,23 @@ export default function DiscoverMapScreen() {
             });
           }
         }
+        if (tnrRes.ok) {
+          const reports = await tnrRes.json();
+          if (Array.isArray(reports)) {
+            reports.forEach((r: any, idx: number) => {
+              if (r.lat && r.lng) {
+                newPins.push({ id: `tnr-${r.id || idx}`, type: 'tnr', icon: '🐱', lat: r.lat, lng: r.lng, title: r.notes || `TNR Case ${idx + 1}` });
+              }
+            });
+          }
+        }
+        // Merge backend data with fallback — keep fallback if backend empty
         if (newPins.length > 0) {
-          setPins(newPins);
+          setPins([...MAP_PINS, ...newPins]);
         }
       } catch (e) {
-        // Keep mock pins as fallback
-        console.log('Using mock map pins:', e);
+        // Keep JSON fallback pins
+        console.log('Using JSON map pins:', e);
       }
     };
     fetchPins();
@@ -141,6 +166,7 @@ export default function DiscoverMapScreen() {
     if (activeFilter === 'Events') return pin.type === 'community';
     if (activeFilter === 'NGOs') return pin.type === 'ngo';
     if (activeFilter === 'Vets') return pin.type === 'vet';
+    if (activeFilter === 'TNR') return pin.type === 'tnr';
     return true;
   });
 
@@ -219,6 +245,7 @@ export default function DiscoverMapScreen() {
                 (pin.type === 'feeder' || pin.type === 'vet') && styles.pinBubbleDark,
                 pin.type === 'community' && styles.pinBubbleGrey,
                 pin.type === 'ngo' && styles.pinBubbleOutline,
+                pin.type === 'tnr' && styles.pinBubbleTnr,
               ]}>
                 <Text style={styles.pinIcon}>{pin.icon}</Text>
               </View>
@@ -319,6 +346,7 @@ const styles = StyleSheet.create({
   pinBubbleDark: { backgroundColor: DARK },
   pinBubbleGrey: { backgroundColor: '#6E6E73' },
   pinBubbleOutline: { backgroundColor: WHITE, borderWidth: 2, borderColor: DARK },
+  pinBubbleTnr: { backgroundColor: '#FF9800' },
   pinIcon: { fontSize: 18 },
   // Tooltip
   resultTooltip: { position: 'absolute', top: 16, alignSelf: 'center', backgroundColor: DARK, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },

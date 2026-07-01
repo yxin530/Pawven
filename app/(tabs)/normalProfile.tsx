@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,10 +24,18 @@ export default function ProfileScreen() {
   const [eventsHosted, setEventsHosted] = useState(0);
 
   // Get profile data from global (set during createProfile)
-  const userName = (global as any).__pawven_name || '';
-  const userBio = (global as any).__pawven_bio || '';
-  const userAvatar = (global as any).__pawven_avatar || '';
-  const isNewUser = !userName;
+  const [name, setName] = useState((global as any).__pawven_name || '');
+  const [bio, setBio] = useState((global as any).__pawven_bio || '');
+  const [avatar, setAvatar] = useState((global as any).__pawven_avatar || '');
+  const [coverPhoto, setCoverPhoto] = useState<string | null>(null);
+
+  // Edit Profile Modal
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState(name);
+  const [editBio, setEditBio] = useState(bio);
+  const [editAvatar, setEditAvatar] = useState(avatar);
+
+  const isNewUser = !name;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,83 +64,84 @@ export default function ProfileScreen() {
     fetchData();
   }, []);
 
-  const handleCameraPress = () => {
-    Alert.alert(
-      'Upload Photo',
-      'Choose how you want to upload your photo',
-      [
-        {
-          text: 'Choose from Gallery',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission Required', 'We need access to your photo gallery to upload images.');
-              return;
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.All,
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
-            if (!result.canceled) {
-              console.log('Selected:', result.assets[0].uri);
-            }
-          },
-        },
-        {
-          text: 'Take Photo',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission Required', 'We need access to your camera to take photos.');
-              return;
-            }
-            const result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
-            if (!result.canceled) {
-              console.log('Captured:', result.assets[0].uri);
-            }
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+  const handleEditProfile = () => {
+    setEditName(name);
+    setEditBio(bio);
+    setEditAvatar(avatar);
+    setEditModalVisible(true);
+  };
+
+  const handleEditSave = () => {
+    setName(editName);
+    setBio(editBio);
+    setAvatar(editAvatar);
+    (global as any).__pawven_name = editName;
+    (global as any).__pawven_bio = editBio;
+    (global as any).__pawven_avatar = editAvatar;
+    setEditModalVisible(false);
+  };
+
+  const handleChangeAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need gallery access.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setEditAvatar(result.assets[0].uri);
+    }
+  };
+
+  const handleChangeCover = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need gallery access.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setCoverPhoto(result.assets[0].uri);
+    }
   };
 
   return (
+    <>
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Cover Photo */}
       <View style={styles.coverPhoto}>
-        <Text style={styles.coverPhotoText}>Cover Photo</Text>
-        <TouchableOpacity style={styles.editCoverButton} onPress={handleCameraPress}>
-          <Text style={styles.editCoverText}>📷 Edit</Text>
-        </TouchableOpacity>
+        {coverPhoto ? (
+          <Image source={{ uri: coverPhoto }} style={{ width: '100%', height: '100%' }} />
+        ) : (
+          <Text style={styles.coverPhotoText}>Cover Photo</Text>
+        )}
       </View>
 
       {/* Avatar */}
       <View style={styles.avatarWrapper}>
         <View style={styles.avatarCircle}>
           <Image
-            source={{ uri: userAvatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=160' }}
+            source={{ uri: avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=160' }}
             style={styles.avatarImage}
           />
         </View>
-        <TouchableOpacity style={styles.avatarEditButton} onPress={handleCameraPress}>
-          <Text style={{ fontSize: 10, color: '#fff' }}>📷</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Name / Edit Profile */}
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.name}>{userName || 'New User'}</Text>
+          <Text style={styles.name}>{name || 'New User'}</Text>
           <Text style={styles.subtitle}>Member since {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
         </View>
-        <TouchableOpacity style={styles.editProfileButton}>
+        <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
           <Text style={styles.editProfileText}>✏️ Edit Profile</Text>
         </TouchableOpacity>
       </View>
@@ -139,12 +150,9 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardLabel}>Bio</Text>
-          <TouchableOpacity>
-            <Text style={styles.editLink}>Edit</Text>
-          </TouchableOpacity>
         </View>
         <Text style={styles.bioText}>
-          {userBio || 'No bio yet. Tap Edit to add one!'}
+          {bio || 'No bio yet. Tap Edit Profile to add one!'}
         </Text>
       </View>
 
@@ -231,6 +239,39 @@ export default function ProfileScreen() {
 
       <View style={{ height: 100 }} />
     </ScrollView>
+
+    <Modal visible={editModalVisible} animationType="slide" transparent>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Edit Profile</Text>
+
+          <TouchableOpacity style={styles.avatarEditBtnModal} onPress={handleChangeAvatar}>
+            <Image source={{ uri: editAvatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=160' }} style={styles.avatarEditImg} />
+            <Text style={styles.avatarEditLabelModal}>📷 Change Avatar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.coverEditBtnModal} onPress={handleChangeCover}>
+            <Text style={styles.coverEditLabelModal}>🖼️ Change Cover Photo</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.inputLabel}>Name</Text>
+          <TextInput style={styles.textInput} value={editName} onChangeText={setEditName} placeholder="Enter name" />
+
+          <Text style={styles.inputLabel}>Bio</Text>
+          <TextInput style={[styles.textInput, styles.textAreaInput]} value={editBio} onChangeText={setEditBio} placeholder="Enter bio" multiline numberOfLines={3} />
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setEditModalVisible(false)}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalSaveBtn} onPress={handleEditSave}>
+              <Text style={styles.modalSaveText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -272,4 +313,21 @@ const styles = StyleSheet.create({
   badgeLabel: { fontSize: 12, color: '#333', textAlign: 'center' },
   viewAllButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, paddingVertical: 14, marginHorizontal: 16, marginTop: 4 },
   viewAllText: { fontSize: 14, fontWeight: '600', color: '#111' },
+  // Modal styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '100%', maxHeight: '80%' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 20, textAlign: 'center' },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: '#6b6b6b', marginBottom: 6, marginTop: 12 },
+  textInput: { borderWidth: 1, borderColor: '#e9e9e9', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#111', backgroundColor: '#f9f9f9' },
+  textAreaInput: { minHeight: 80, textAlignVertical: 'top' },
+  modalActions: { flexDirection: 'row', marginTop: 24, gap: 12 },
+  modalCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 24, borderWidth: 1, borderColor: '#e9e9e9', alignItems: 'center' },
+  modalCancelText: { fontSize: 14, fontWeight: '600', color: '#6b6b6b' },
+  modalSaveBtn: { flex: 1, paddingVertical: 14, borderRadius: 24, backgroundColor: '#111', alignItems: 'center' },
+  modalSaveText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  avatarEditBtnModal: { alignItems: 'center', marginBottom: 8 },
+  avatarEditImg: { width: 72, height: 72, borderRadius: 36, marginBottom: 8 },
+  avatarEditLabelModal: { fontSize: 13, color: '#111', fontWeight: '600' },
+  coverEditBtnModal: { alignItems: 'center', marginTop: 8, paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 12 },
+  coverEditLabelModal: { fontSize: 13, color: '#111', fontWeight: '600' },
 });
