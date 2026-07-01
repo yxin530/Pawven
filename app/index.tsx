@@ -77,10 +77,6 @@ export default function OnboardingScreen() {
     router.push("/(auth)/email_screen");
   };
 
-  const handleSignIn = () => {
-    router.push("/(auth)/sign-in");
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={DARK} />
@@ -149,14 +145,6 @@ export default function OnboardingScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.btnPrimaryText}>Get started</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.btnSecondary}
-            onPress={handleSignIn}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.btnSecondaryText}>Sign in</Text>
           </TouchableOpacity>
 
           <Text style={styles.legal}>
@@ -245,6 +233,10 @@ function GetStartedSheet({
                 Continue with Email
               </Text>
             </TouchableOpacity>
+
+            <Text style={styles.sheetSignInHint}>
+              Already have an account? Sign in with your phone or email above.
+            </Text>
           </View>
 
           <Text style={styles.sheetLegal}>
@@ -440,17 +432,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.2,
   },
-  btnSecondary: {
-    borderRadius: 14,
-    paddingVertical: 17,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  btnSecondaryText: {
-    color: DARK,
-    fontSize: 16,
-    fontWeight: "500",
-  },
   legal: {
     fontSize: 11,
     color: GREY_TEXT,
@@ -561,6 +542,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     textAlign: "center",
     marginTop: 18,
+  },
+  sheetSignInHint: {
+    color: "#7D7A7D",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 18,
   },
   sheetLegalLink: {
     color: DARK,
