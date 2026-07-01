@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Config } from '@/constants/Config';
 import { getPostsByOrg, Post } from '@/data/posts';
+import AccountSection from '@/components/ui/AccountSection';
 
 export default function NGOVetProfileScreen() {
   const router = useRouter();
@@ -338,6 +339,8 @@ export default function NGOVetProfileScreen() {
             ))
           )}
         </View>
+
+        <AccountSection />
 
         <View style={{ height: 100 }} />
       </ScrollView>

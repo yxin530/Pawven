@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Config } from '@/constants/Config';
+import AccountSection from '@/components/ui/AccountSection';
 
 // Get TNR completed count from backend (0 for new users)
 export default function ProfileScreen() {
@@ -236,6 +237,8 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/badgesScreen')}>
         <Text style={styles.viewAllText}>🐾  {badgesCount > 0 ? `View All ${badgesCount} Badges` : 'No badges yet — start exploring!'}</Text>
       </TouchableOpacity>
+
+      <AccountSection />
 
       <View style={{ height: 100 }} />
     </ScrollView>
