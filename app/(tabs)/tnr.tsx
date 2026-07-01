@@ -192,9 +192,10 @@ function TNRWithCases({ onReport }: { onReport: () => void }) {
             title: r.notes || 'Untitled',
             location: r.address || 'Unknown',
             reportedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
-            status: r.status === 'open' ? 'Pending' : r.status === 'in_progress' ? 'In Progress' : 'Done',
-            stepsCompleted: r.status === 'open' ? 1 : r.status === 'in_progress' ? 2 : 4,
+            status: r.status === 'open' ? 'Pending' : r.status === 'in_progress' ? 'In Progress' : r.status === 'completed' ? 'Done' : r.status === 'declined' ? 'Pending' : 'Pending',
+            stepsCompleted: r.status === 'open' ? 1 : r.status === 'in_progress' ? 2 : r.status === 'completed' ? 4 : 1,
             totalSteps: 4,
+            assignedTo: r.assigned_to ? 'NGO/Vet assigned' : undefined,
           }));
           setCases(mapped);
         }

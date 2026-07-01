@@ -1,0 +1,35 @@
+[
+  {
+    "id": "user_001",
+    "name": "Alice Tan",
+    "followers": 124,
+    "following": 78,
+    "posts": 12,
+    "catsFed": 143,
+    "kibblesDonated": "32.5 kg",
+    "badges": ["Top Feeder", "Volunteer"],
+    "location": "Petaling Jaya"
+  },
+  {
+    "id": "user_002",
+    "name": "Daniel Lim",
+    "followers": 68,
+    "following": 45,
+    "posts": 5,
+    "catsFed": 67,
+    "kibblesDonated": "18.2 kg",
+    "badges": ["Community Helper"],
+    "location": "George Town"
+  },
+  {
+    "id": "user_003",
+    "name": "Sarah Wong",
+    "followers": 212,
+    "following": 143,
+    "posts": 21,
+    "catsFed": 201,
+    "kibblesDonated": "45.1 kg",
+    "badges": ["Top Feeder", "Cat Lover"],
+    "location": "Singapore"
+  }
+]

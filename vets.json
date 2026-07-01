@@ -1,0 +1,41 @@
+[
+  {
+    "id": "vet_001",
+    "name": "Dr Priya Sharma",
+    "followers": 1623,
+    "posts": 34,
+    "feeders": 2,
+    "contact": "+6016-442 1938",
+    "bio": "Veterinarian passionate about community cats and emergency rescue.",
+    "rating": 4.9,
+    "location": "Petaling Jaya, Selangor",
+    "openingTime": "10:00 AM - 7:00 PM",
+    "avatar": "priya.png"
+  },
+  {
+    "id": "vet_002",
+    "name": "Dr Kevin Ong",
+    "followers": 2148,
+    "posts": 49,
+    "feeders": 4,
+    "contact": "+6017-389 1028",
+    "bio": "Small animal veterinarian with experience in surgery and rescue medicine.",
+    "rating": 4.8,
+    "location": "Bukit Mertajam, Penang",
+    "openingTime": "9:00 AM - 6:00 PM",
+    "avatar": "kevin.png"
+  },
+  {
+    "id": "vet_003",
+    "name": "Dr Lim Pet Clinic",
+    "followers": 3578,
+    "posts": 82,
+    "feeders": 5,
+    "contact": "+603-7725 8812",
+    "bio": "Affordable veterinary services with support for stray animal welfare.",
+    "rating": 4.7,
+    "location": "Subang Jaya, Selangor",
+    "openingTime": "9:00 AM - 8:00 PM",
+    "avatar": "drlim.png"
+  }
+]

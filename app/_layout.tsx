@@ -17,6 +17,7 @@ export default function RootLayout() {
       <Stack.Screen name="eventDetail" />
       <Stack.Screen name="eventAttendees" />
       <Stack.Screen name="orgProfile" />
+      <Stack.Screen name="communityProfile" />
       <Stack.Screen name="ngo" />
       <Stack.Screen
         name="profile"

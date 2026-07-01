@@ -89,9 +89,9 @@ const UPCOMING_ACTIVITIES = [
 ];
 
 const COMMUNITIES = [
-  { id: '1', name: 'West Side Feeders', members: '230 members', following: false, icon: '👥' },
-  { id: '2', name: 'SPCA Volunteers SG', members: '1.2k members', following: true, icon: '🐾' },
-  { id: '3', name: 'Vets for Strays', members: '580 members', following: true, icon: '🩺' },
+  { id: 'community_001', name: 'SPCA Volunteers SG', members: '2.9k members', following: false, icon: '🐾', followers: '2913', posts: '215', bio: 'Volunteer coordination, rescue updates and adoption events across Singapore.', location: 'Singapore' },
+  { id: 'community_002', name: 'SPCA Volunteers Selangor', members: '1.8k members', following: false, icon: '👥', followers: '1845', posts: '172', bio: 'Helping feed, rescue and foster community cats around Selangor.', location: 'Malaysia · Selangor' },
+  { id: 'community_003', name: 'Vets for Strays', members: '4.3k members', following: false, icon: '🩺', followers: '4261', posts: '138', bio: 'Veterinarians and volunteers sharing medical resources for stray animals.', location: 'Malaysia & Singapore' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -157,24 +157,31 @@ const ListActivityCard = ({ item, onPress }: { item: any; onPress: () => void })
   </TouchableOpacity>
 );
 
-const CommunityCard = ({ item }: { item: any }) => (
-  <View style={styles.communityCard}>
-    <View style={styles.communityIcon}>
-      <Text style={{ fontSize: 22 }}>{item.icon}</Text>
-    </View>
-    <Text style={styles.communityName}>{item.name}</Text>
-    <Text style={styles.communityMembers}>{item.members}</Text>
-    {item.following ? (
-      <TouchableOpacity style={styles.btnFollowing} activeOpacity={0.8}>
-        <Text style={styles.btnFollowingText}>Following</Text>
-      </TouchableOpacity>
-    ) : (
-      <TouchableOpacity style={styles.btnFollow} activeOpacity={0.85}>
-        <Text style={styles.btnFollowText}>Follow</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
+const CommunityCard = ({ item }: { item: any }) => {
+  const router = useRouter();
+  return (
+    <TouchableOpacity
+      style={styles.communityCard}
+      onPress={() => router.push({ pathname: '/communityProfile', params: { id: item.id, name: item.name, followers: item.followers || '0', posts: item.posts || '0', bio: item.bio || '', location: item.location || '' } })}
+      activeOpacity={0.85}
+    >
+      <View style={styles.communityIcon}>
+        <Text style={{ fontSize: 22 }}>{item.icon}</Text>
+      </View>
+      <Text style={styles.communityName}>{item.name}</Text>
+      <Text style={styles.communityMembers}>{item.members}</Text>
+      {item.following ? (
+        <TouchableOpacity style={styles.btnFollowing} activeOpacity={0.8}>
+          <Text style={styles.btnFollowingText}>Following</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.btnFollow} activeOpacity={0.85}>
+          <Text style={styles.btnFollowText}>Follow</Text>
+        </TouchableOpacity>
+      )}
+    </TouchableOpacity>
+  );
+};
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {

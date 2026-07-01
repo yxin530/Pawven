@@ -1,0 +1,54 @@
+[
+  {
+    "id": "event_001",
+    "title": "Workshop by SPCA",
+    "host": "SPCA Selangor",
+    "date": "2026-08-02",
+    "time": "10:00 AM - 1:00 PM",
+    "location": "SPCA Selangor HQ",
+    "category": "Workshop",
+    "capacity": 80,
+    "attending": 43,
+    "price": "Free",
+    "description": "Learn basic rescue techniques, kitten care and responsible community feeding."
+  },
+  {
+    "id": "event_002",
+    "title": "Vet Volunteer Day",
+    "host": "Dr Priya Sharma",
+    "date": "2026-08-09",
+    "time": "9:00 AM - 4:00 PM",
+    "location": "Petaling Jaya",
+    "category": "Volunteer",
+    "capacity": 50,
+    "attending": 37,
+    "price": "Free",
+    "description": "Join veterinarians in providing health checks for rescued community cats."
+  },
+  {
+    "id": "event_003",
+    "title": "Colony Count in Pasir Ris",
+    "host": "Cat Welfare SG",
+    "date": "2026-08-15",
+    "time": "7:00 PM - 10:00 PM",
+    "location": "Pasir Ris, Singapore",
+    "category": "Community",
+    "capacity": 40,
+    "attending": 22,
+    "price": "Free",
+    "description": "Help document community cat populations to support future TNR planning."
+  },
+  {
+    "id": "event_004",
+    "title": "Cat Owners Hangout",
+    "host": "KucingCare",
+    "date": "2026-08-23",
+    "time": "2:00 PM - 5:00 PM",
+    "location": "George Town, Penang",
+    "category": "Meetup",
+    "capacity": 100,
+    "attending": 58,
+    "price": "RM10",
+    "description": "Meet fellow cat lovers, exchange tips and support local rescue initiatives."
+  }
+]

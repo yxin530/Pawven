@@ -1,0 +1,58 @@
+[
+  {
+    "id": "ngo_001",
+    "name": "SPCA Selangor",
+    "volunteers": 183,
+    "posts": 56,
+    "feeders": 8,
+    "contact": "+603-4266 5312",
+    "email": "info@spcaselangor.org",
+    "bio": "Protecting and caring for abandoned cats through rescue, adoption, education and community feeding.",
+    "location": "Ampang, Selangor, Malaysia",
+    "openingTime": "9:00 AM - 5:00 PM",
+    "followers": 5231,
+    "avatar": "spca_selangor.png"
+  },
+  {
+    "id": "ngo_002",
+    "name": "SPCA Singapore",
+    "volunteers": 265,
+    "posts": 92,
+    "feeders": 12,
+    "contact": "+65 6287 5355",
+    "email": "mail@spca.org.sg",
+    "bio": "Improving animal welfare through rescue, education and responsible pet ownership.",
+    "location": "Mount Vernon, Singapore",
+    "openingTime": "11:00 AM - 4:00 PM",
+    "followers": 10420,
+    "avatar": "spca_sg.png"
+  },
+  {
+    "id": "ngo_003",
+    "name": "Cat Welfare SG",
+    "volunteers": 148,
+    "posts": 74,
+    "feeders": 6,
+    "contact": "+65 9123 4567",
+    "email": "hello@catwelfare.sg",
+    "bio": "Building a safer environment for community cats through education and sterilisation.",
+    "location": "Toa Payoh, Singapore",
+    "openingTime": "10:00 AM - 6:00 PM",
+    "followers": 8120,
+    "avatar": "catwelfare.png"
+  },
+  {
+    "id": "ngo_004",
+    "name": "KucingCare",
+    "volunteers": 91,
+    "posts": 31,
+    "feeders": 5,
+    "contact": "+6012-889 3312",
+    "email": "care@kucingcare.my",
+    "bio": "Local rescue initiative helping stray cats with feeding, treatment and adoption.",
+    "location": "George Town, Penang",
+    "openingTime": "9:30 AM - 6:30 PM",
+    "followers": 2789,
+    "avatar": "kucingcare.png"
+  }
+]

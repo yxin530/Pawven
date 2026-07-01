@@ -4,10 +4,10 @@ import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
-// POST /api/report — Submit TNR report (requires auth)
-router.post('/report', requireAuth, async (req: Request, res: Response) => {
+// POST /api/report — Submit TNR report
+router.post('/report', async (req: Request, res: Response) => {
   try {
-    const { strayPhotoUrl, lat, lng, address, notes, activityType } = req.body;
+    const { strayPhotoUrl, lat, lng, address, notes, activityType, reporterName } = req.body;
 
     if (!activityType) {
       res.status(400).json({ error: 'activityType is required' });
@@ -22,13 +22,13 @@ router.post('/report', requireAuth, async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('tnr_reports')
       .insert({
-        stray_photo_url: strayPhotoUrl,
+        stray_photo_url: strayPhotoUrl || null,
         lat,
         lng,
         address,
         notes: notes || '',
         activity_type: activityType,
-        reported_by: req.userId,
+        reported_by: req.userId || null,
         status: 'open',
       })
       .select()
@@ -42,59 +42,132 @@ router.post('/report', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /api/reports/:id — Update report status (requires auth, NGO/vet role)
-router.patch('/reports/:id', requireAuth, async (req: Request, res: Response) => {
+// GET /api/reports — List all reports (supports ?status filter)
+router.get('/reports', async (req: Request, res: Response) => {
   try {
-    // Verify user has NGO or vet role
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('role')
-      .eq('clerk_id', req.userId)
-      .single();
+    const { status, assignedTo } = req.query;
 
-    if (userError || !user || (user.role !== 'ngo' && user.role !== 'vet')) {
-      res.status(403).json({ error: 'Only NGO or vet users can update report status' });
-      return;
-    }
+    let query = supabase.from('tnr_reports').select('*').order('created_at', { ascending: false });
 
-    const { status, assignedTo } = req.body;
+    if (status) query = query.eq('status', status as string);
+    if (assignedTo) query = query.eq('assigned_to', assignedTo as string);
 
-    const updateFields: Record<string, any> = { updated_at: new Date().toISOString() };
-    if (status) updateFields.status = status;
-    if (assignedTo) updateFields.assigned_to = assignedTo;
-
-    const { data, error } = await supabase
-      .from('tnr_reports')
-      .update(updateFields)
-      .eq('id', req.params.id)
-      .select()
-      .single();
-
-    if (error || !data) {
-      res.status(404).json({ error: 'Report not found' });
-      return;
-    }
-
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update report' });
-  }
-});
-
-// GET /api/reports — List user's reports (requires auth)
-router.get('/reports', requireAuth, async (req: Request, res: Response) => {
-  try {
-    const { data, error } = await supabase
-      .from('tnr_reports')
-      .select('*')
-      .eq('reported_by', req.userId)
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await query;
     if (error) throw error;
 
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// GET /api/reports/pending — Get all open reports (for NGOs/Vets to see)
+router.get('/reports/pending', async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('tnr_reports')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch pending reports' });
+  }
+});
+
+// PATCH /api/reports/:id/accept — NGO/Vet accepts a case
+router.patch('/reports/:id/accept', async (req: Request, res: Response) => {
+  try {
+    const { assignedToName } = req.body;
+
+    const { data, error } = await supabase
+      .from('tnr_reports')
+      .update({
+        status: 'in_progress',
+        assigned_to: req.userId || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .eq('status', 'open')
+      .select()
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ error: 'Report not found or already assigned' });
+      return;
+    }
+
+    // Post an update message
+    await supabase.from('updates').insert({
+      thread_type: 'report',
+      thread_id: data.id,
+      author_id: req.userId || null,
+      message: `Case accepted by ${assignedToName || 'NGO/Vet'}. Now in progress.`,
+    });
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to accept report' });
+  }
+});
+
+// PATCH /api/reports/:id/decline — NGO/Vet declines a case
+router.patch('/reports/:id/decline', async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('tnr_reports')
+      .update({
+        status: 'declined',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .eq('status', 'open')
+      .select()
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ error: 'Report not found or already processed' });
+      return;
+    }
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to decline report' });
+  }
+});
+
+// PATCH /api/reports/:id/complete — Mark case as completed
+router.patch('/reports/:id/complete', async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('tnr_reports')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .eq('status', 'in_progress')
+      .select()
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ error: 'Report not found or not in progress' });
+      return;
+    }
+
+    // Post completion update
+    await supabase.from('updates').insert({
+      thread_type: 'report',
+      thread_id: data.id,
+      author_id: req.userId || null,
+      message: 'Case completed! Cat has been trapped, neutered, and returned.',
+    });
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to complete report' });
   }
 });
 
@@ -109,48 +182,44 @@ router.get('/reports/:id/updates', async (req: Request, res: Response) => {
       .order('created_at', { ascending: true });
 
     if (error) throw error;
-
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch updates' });
   }
 });
 
-// POST /api/reports/:id/updates — Post case update (requires auth)
-router.post('/reports/:id/updates', requireAuth, async (req: Request, res: Response) => {
+// POST /api/reports/:id/updates — Post case update
+router.post('/reports/:id/updates', async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
-
     if (!message) {
       res.status(400).json({ error: 'Message is required' });
       return;
     }
 
-    // Verify report exists
-    const { data: report, error: reportError } = await supabase
+    const { data: report } = await supabase
       .from('tnr_reports')
       .select('id')
       .eq('id', req.params.id)
       .single();
 
-    if (reportError || !report) {
+    if (!report) {
       res.status(404).json({ error: 'Report not found' });
       return;
     }
 
-    const { data: update, error: insertError } = await supabase
+    const { data: update, error } = await supabase
       .from('updates')
       .insert({
         thread_type: 'report',
         thread_id: report.id,
-        author_id: req.userId,
+        author_id: req.userId || null,
         message,
       })
       .select()
       .single();
 
-    if (insertError) throw insertError;
-
+    if (error) throw error;
     res.status(201).json(update);
   } catch (error) {
     res.status(500).json({ error: 'Failed to post update' });

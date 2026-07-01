@@ -148,9 +148,9 @@ const getStatusBadgeStyle = (status: CaseStatus) => {
 // Component
 // ---------------------------------------------
 const TNRReportCasesScreen: React.FC<TNRReportCasesScreenProps> = ({
-  pendingCount = 14,
-  acceptedCount = 38,
-  declinedCount = 6,
+  pendingCount: _pendingCount,
+  acceptedCount: _acceptedCount,
+  declinedCount: _declinedCount,
   cases = defaultCases,
   onAcceptCase,
   onDeclineCase,
@@ -161,36 +161,109 @@ const TNRReportCasesScreen: React.FC<TNRReportCasesScreenProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [liveCases, setLiveCases] = useState<TNRCase[]>(cases);
+  const [liveCases, setLiveCases] = useState<TNRCase[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [acceptedCount, setAcceptedCount] = useState(0);
+  const [declinedCount, setDeclinedCount] = useState(0);
+
+  const fetchReports = async () => {
+    try {
+      const res = await fetch(`${Config.API_BASE_URL}/reports`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const mapped: TNRCase[] = data.map((r: any, idx: number) => ({
+          id: r.id,
+          caseNumber: `#TNR-${new Date(r.created_at).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
+          status: r.status === 'open' ? 'Pending' : r.status === 'in_progress' ? 'In Progress' : r.status === 'completed' ? 'Completed' : r.status === 'declined' ? 'Declined' : 'Pending',
+          timeAgo: getTimeAgo(r.created_at),
+          title: r.notes || 'Stray Cat Report',
+          location: r.address || 'Unknown location',
+          catCount: r.activity_type || 'TNR',
+          reporterName: 'Reporter',
+          reporterEmail: '',
+          reporterMessage: r.notes || undefined,
+        }));
+        setLiveCases(mapped);
+        setPendingCount(mapped.filter(c => c.status === 'Pending').length);
+        setAcceptedCount(mapped.filter(c => c.status === 'In Progress' || c.status === 'Accepted').length);
+        setDeclinedCount(mapped.filter(c => c.status === 'Declined').length);
+      } else {
+        // No reports = empty state for new NGOs/Vets
+        setLiveCases([]);
+      }
+    } catch {
+      // No fallback mock data — new NGOs see empty
+      setLiveCases([]);
+    }
+  };
 
   useEffect(() => {
-    const fetchReports = async () => {
-      try {
-        const res = await fetch(`${Config.API_BASE_URL}/reports`);
-        if (!res.ok) throw new Error('Failed to fetch');
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: TNRCase[] = data.map((r: any, idx: number) => ({
-            id: r.id,
-            caseNumber: `#TNR-${new Date(r.created_at).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
-            status: r.status === 'open' ? 'Pending' : r.status === 'in_progress' ? 'In Progress' : r.status === 'completed' ? 'Completed' : 'Pending',
-            timeAgo: getTimeAgo(r.created_at),
-            title: r.notes || 'Stray Cat Report',
-            location: r.address || 'Unknown location',
-            catCount: r.activity_type || 'TNR',
-            reporterName: 'Reporter',
-            reporterEmail: '',
-            reporterMessage: r.notes || undefined,
-          }));
-          setLiveCases(mapped);
-        }
-      } catch (e) {
-        // Keep default mock cases as fallback
-        console.log('Using mock NGO/Vet cases:', e);
-      }
-    };
     fetchReports();
   }, []);
+
+  const handleAccept = async (caseId: string) => {
+    try {
+      const orgName = (global as any).__pawven_name || 'NGO/Vet';
+      const res = await fetch(`${Config.API_BASE_URL}/reports/${caseId}/accept`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedToName: orgName }),
+      });
+      if (res.ok) {
+        // Update local state
+        setLiveCases(prev => prev.map(c =>
+          c.id === caseId ? { ...c, status: 'In Progress' as CaseStatus } : c
+        ));
+        setPendingCount(p => Math.max(0, p - 1));
+        setAcceptedCount(a => a + 1);
+      }
+    } catch {
+      // Fallback: update locally
+      setLiveCases(prev => prev.map(c =>
+        c.id === caseId ? { ...c, status: 'In Progress' as CaseStatus } : c
+      ));
+    }
+    onAcceptCase?.(caseId);
+  };
+
+  const handleDecline = async (caseId: string) => {
+    try {
+      const res = await fetch(`${Config.API_BASE_URL}/reports/${caseId}/decline`, {
+        method: 'PATCH',
+      });
+      if (res.ok) {
+        setLiveCases(prev => prev.map(c =>
+          c.id === caseId ? { ...c, status: 'Declined' as CaseStatus } : c
+        ));
+        setPendingCount(p => Math.max(0, p - 1));
+        setDeclinedCount(d => d + 1);
+      }
+    } catch {
+      setLiveCases(prev => prev.map(c =>
+        c.id === caseId ? { ...c, status: 'Declined' as CaseStatus } : c
+      ));
+    }
+    onDeclineCase?.(caseId);
+  };
+
+  const handleComplete = async (caseId: string) => {
+    try {
+      const res = await fetch(`${Config.API_BASE_URL}/reports/${caseId}/complete`, {
+        method: 'PATCH',
+      });
+      if (res.ok) {
+        setLiveCases(prev => prev.map(c =>
+          c.id === caseId ? { ...c, status: 'Completed' as CaseStatus } : c
+        ));
+        setAcceptedCount(a => Math.max(0, a - 1));
+      }
+    } catch {
+      setLiveCases(prev => prev.map(c =>
+        c.id === caseId ? { ...c, status: 'Completed' as CaseStatus } : c
+      ));
+    }
+  };
 
   const filteredCases = liveCases.filter((c) => {
     const matchesTab = activeTab === 'All' || c.status === activeTab;
@@ -349,14 +422,14 @@ const TNRReportCasesScreen: React.FC<TNRReportCasesScreenProps> = ({
                   <View style={styles.caseActionRow}>
                     <TouchableOpacity
                       style={styles.acceptBtn}
-                      onPress={() => onAcceptCase?.(c.id)}
+                      onPress={() => handleAccept(c.id)}
                     >
                       <Text style={styles.acceptBtnIcon}>✓</Text>
                       <Text style={styles.acceptBtnText}>Accept Case</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.declineBtn}
-                      onPress={() => onDeclineCase?.(c.id)}
+                      onPress={() => handleDecline(c.id)}
                     >
                       <Text style={styles.declineBtnIcon}>✕</Text>
                       <Text style={styles.declineBtnText}>Decline</Text>

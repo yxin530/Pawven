@@ -16,23 +16,23 @@ type FilterKey = 'All' | 'Feeder' | 'Communities Activity' | 'NGOs';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const FEEDERS = [
-  { id: '1', name: 'Cats Canteen', area: 'West Coast', colony: 'Colony of 8', distance: '0.4 km', following: false },
-  { id: '2', name: 'Home for cats', area: 'Jurong East', colony: 'Colony of 12', distance: '1.1 km', following: false },
+  { id: 'feeder_001', name: 'Cats Canteen', area: 'Ampang, Selangor', colony: 'Kibble 85%', distance: '~nearby', following: false },
+  { id: 'feeder_002', name: 'Home for Cats', area: 'Toa Payoh, Singapore', colony: 'Kibble 62%', distance: '~nearby', following: false },
 ];
 
 const COMMUNITY_POSTS = [
-  { id: '1', type: 'photo', time: 'Today · 5 min ago', title: 'East Feeders held a colony count in Pasir Ris', participants: 6, likes: 24 },
-  { id: '2', type: 'text', icon: '📣', name: 'West Side Cat Owners Hangout', desc: 'Looking for cat owners to bring their cats to hangout together.', time: '2 hours ago' },
+  { id: 'event_003', type: 'photo', time: 'Aug 15', title: 'Colony Count in Pasir Ris', participants: 22, likes: 0 },
+  { id: 'community_001', type: 'text', icon: '📣', name: 'SPCA Volunteers SG', desc: 'Volunteer coordination, rescue updates and adoption events across Singapore.', time: 'Active' },
 ];
 
 const NGOS = [
-  { id: '1', name: 'SPCA Singapore', volunteers: '1.2k volunteers', icon: '🏢', following: true },
-  { id: '2', name: 'CatWelfare SG', volunteers: '870 volunteers', icon: '🐾', following: false },
+  { id: 'ngo_001', name: 'SPCA Selangor', volunteers: '183 volunteers', icon: '🏢', following: false },
+  { id: 'ngo_003', name: 'Cat Welfare SG', volunteers: '148 volunteers', icon: '🐾', following: false },
 ];
 
 const VETS = [
-  { id: '1', name: 'Dr. Priya Sharma', clinic: 'Vet Clinic · Bishan · Open now', rating: '4.9', specialty: 'TNR specialist' },
-  { id: '2', name: 'Dr. Kevin Ong', clinic: 'Pet Ave Clinic · Yishun', rating: '4.7', specialty: 'General practice' },
+  { id: 'vet_001', name: 'Dr Priya Sharma', clinic: 'Petaling Jaya · 10 AM - 7 PM', rating: '4.9', specialty: 'Community cats & rescue' },
+  { id: 'vet_002', name: 'Dr Kevin Ong', clinic: 'Bukit Mertajam · 9 AM - 6 PM', rating: '4.8', specialty: 'Surgery & rescue medicine' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -88,16 +88,23 @@ const CommunityPhotoPost = ({ item, onPress }: { item: any; onPress?: () => void
   </TouchableOpacity>
 );
 
-const CommunityTextPost = ({ item }: { item: any }) => (
-  <View style={styles.communityTextCard}>
-    <View style={styles.communityTextIcon}><Text style={{ fontSize: 18 }}>{item.icon}</Text></View>
-    <View style={styles.communityTextBody}>
-      <Text style={styles.communityTextName}>{item.name}</Text>
-      <Text style={styles.communityTextDesc}>{item.desc}</Text>
-      <Text style={styles.communityTime}>{item.time}</Text>
-    </View>
-  </View>
-);
+const CommunityTextPost = ({ item }: { item: any }) => {
+  const router = useRouter();
+  return (
+    <TouchableOpacity
+      style={styles.communityTextCard}
+      onPress={() => router.push({ pathname: '/communityProfile', params: { id: item.id || '', name: item.name || '', bio: item.desc || '', location: '' } })}
+      activeOpacity={0.85}
+    >
+      <View style={styles.communityTextIcon}><Text style={{ fontSize: 18 }}>{item.icon}</Text></View>
+      <View style={styles.communityTextBody}>
+        <Text style={styles.communityTextName}>{item.name}</Text>
+        <Text style={styles.communityTextDesc}>{item.desc}</Text>
+        <Text style={styles.communityTime}>{item.time}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const NgoCard = ({ item }: { item: any }) => {
   const [following, setFollowing] = useState(item.following);

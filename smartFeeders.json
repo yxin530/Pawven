@@ -1,0 +1,45 @@
+[
+  {
+    "id": "feeder_001",
+    "name": "Cats Canteen",
+    "owner": "SPCA Selangor",
+    "totalKibblesFed": "482.5 kg",
+    "todayFed": "6.8 kg",
+    "catsDetectedToday": 19,
+    "usersFed": [
+      "Alice Tan",
+      "Daniel Lim",
+      "Sarah Wong",
+      "Jason Lee"
+    ],
+    "status": "Online"
+  },
+  {
+    "id": "feeder_002",
+    "name": "Home for Cats",
+    "owner": "Cat Welfare SG",
+    "totalKibblesFed": "331.2 kg",
+    "todayFed": "4.5 kg",
+    "catsDetectedToday": 13,
+    "usersFed": [
+      "Emily Ng",
+      "Kevin Tan",
+      "Michelle Chua"
+    ],
+    "status": "Online"
+  },
+  {
+    "id": "feeder_003",
+    "name": "Taman Desa Feeder",
+    "owner": "KucingCare",
+    "totalKibblesFed": "198.4 kg",
+    "todayFed": "2.3 kg",
+    "catsDetectedToday": 9,
+    "usersFed": [
+      "Ahmad",
+      "Melissa",
+      "Ryan"
+    ],
+    "status": "Offline"
+  }
+]

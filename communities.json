@@ -1,0 +1,26 @@
+[
+  {
+    "id": "community_001",
+    "name": "SPCA Volunteers SG",
+    "followers": 2913,
+    "posts": 215,
+    "bio": "Volunteer coordination, rescue updates and adoption events across Singapore.",
+    "locationArea": "Singapore"
+  },
+  {
+    "id": "community_002",
+    "name": "SPCA Volunteers Selangor",
+    "followers": 1845,
+    "posts": 172,
+    "bio": "Helping feed, rescue and foster community cats around Selangor.",
+    "locationArea": "Malaysia • Selangor"
+  },
+  {
+    "id": "community_003",
+    "name": "Vets for Strays",
+    "followers": 4261,
+    "posts": 138,
+    "bio": "Veterinarians and volunteers sharing medical resources for stray animals.",
+    "locationArea": "Malaysia & Singapore"
+  }
+]
