@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
+import { getRandomAvatar } from '@/constants/Avatars';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type FilterKey = 'All' | 'Feeder' | 'Communities Activity' | 'NGOs';
@@ -57,7 +58,7 @@ const FeederRow = ({ item }: { item: any }) => {
   return (
     <View style={styles.feederRow}>
       <View style={styles.feederAvatar}>
-        <Image source={{ uri: `https://api.dicebear.com/9.x/thumbs/png?seed=${item.id}&size=48` }} style={{ width: 48, height: 48, borderRadius: 24 }} />
+        <Image source={getRandomAvatar(parseInt(item.id?.replace(/\D/g, '') || '0', 10))} style={{ width: 48, height: 48, borderRadius: 24 }} />
       </View>
       <View style={styles.feederInfo}>
         <Text style={styles.feederName}>{item.name}</Text>
@@ -76,13 +77,15 @@ const FeederRow = ({ item }: { item: any }) => {
 
 const CommunityPhotoPost = ({ item, onPress }: { item: any; onPress?: () => void }) => (
   <TouchableOpacity style={styles.communityPhotoCard} onPress={onPress} activeOpacity={0.88}>
-    <View style={styles.communityPhotoBanner}><Text style={styles.communityPhotoLabel}>Community Event Photo</Text></View>
+    <View style={styles.communityPhotoBanner}>
+      <Image source={require('@/assets/images/eventCover1.png')} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+    </View>
     <View style={styles.communityPhotoBody}>
       <Text style={styles.communityTime}>{item.time}</Text>
       <Text style={styles.communityTitle}>{item.title}</Text>
       <View style={styles.communityFooter}>
         <View style={styles.participantStack}>
-          {[0, 1].map(i => (<View key={i} style={[styles.participantAvatar, { marginLeft: i === 0 ? 0 : -8 }]}><Image source={{ uri: `https://api.dicebear.com/9.x/thumbs/png?seed=participant${i}&size=24` }} style={{ width: 24, height: 24, borderRadius: 12 }} /></View>))}
+          {[0, 1].map(i => (<View key={i} style={[styles.participantAvatar, { marginLeft: i === 0 ? 0 : -8 }]}><Image source={getRandomAvatar(i)} style={{ width: 24, height: 24, borderRadius: 12 }} /></View>))}
           <Text style={styles.participantText}>+{item.participants} participants</Text>
         </View>
         <Text style={styles.likeText}>🤍 {item.likes}</Text>
@@ -240,7 +243,7 @@ export default function DiscoverScreen() {
         {(activeFilter === 'All' || activeFilter === 'Feeder') && (<><SectionHeader title="Feeders" onSeeAll={() => router.push('/listFeeders')} /><View style={styles.card}>{feeders.map((item: any, idx: number) => (<View key={item.id}><FeederRow item={item} />{idx < feeders.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
 
         {/* Communities */}
-        {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" onSeeAll={() => router.push('/listCommunities')} />{communityPosts.filter(p => p.type === 'photo').slice(0, 3).map((item: any) => <CommunityPhotoPost key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.time } })} />)}{communityPosts.filter(p => p.type === 'text').slice(0, 2).map((item: any) => <CommunityTextPost key={item.id} item={item} />)}</>)}
+        {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" onSeeAll={() => router.push('/listCommunities')} />{communityPosts.filter(p => p.type === 'photo').slice(0, 3).map((item: any) => <CommunityPhotoPost key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.time, going: String(item.participants || 0) } })} />)}{communityPosts.filter(p => p.type === 'text').slice(0, 2).map((item: any) => <CommunityTextPost key={item.id} item={item} />)}</>)}
 
         {/* NGOs */}
         {(activeFilter === 'All' || activeFilter === 'NGOs') && (<><SectionHeader title="NGOs" onSeeAll={() => router.push('/listNgos')} /><View style={styles.ngoRow}>{orgs.map((item: any) => <NgoCard key={item.id} item={item} />)}</View></>)}

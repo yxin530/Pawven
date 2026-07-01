@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { BlurView } from "expo-blur";
 
 export default function TabLayout() {
@@ -46,21 +46,21 @@ export default function TabLayout() {
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text>,
+          tabBarIcon: ({ focused }) => <Image source={require('@/assets/icons/homeIcon.png')} style={{ width: 24, height: 24, opacity: focused ? 1 : 0.5 }} resizeMode="contain" />,
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
           title: "Discover",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🧭</Text>,
+          tabBarIcon: ({ focused }) => <Image source={require('@/assets/icons/discoverIcon.png')} style={{ width: 26, height: 26, opacity: focused ? 1 : 0.5 }} resizeMode="contain" />,
         }}
       />
       <Tabs.Screen
         name="tnr"
         options={{
           title: "TNR",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
+          tabBarIcon: ({ focused }) => <Image source={require('@/assets/icons/tnrIcon.jpg')} style={{ width: 26, height: 26, borderRadius: 13, opacity: focused ? 1 : 0.5 }} resizeMode="cover" />,
         }}
       />
       <Tabs.Screen

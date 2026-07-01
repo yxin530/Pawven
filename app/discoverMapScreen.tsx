@@ -15,20 +15,21 @@ import {
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
+import { getRandomAvatar, getAvatarForType } from '@/constants/Avatars';
 
 type MapFilterKey = 'All' | 'Feeder' | 'Events' | 'NGOs' | 'Vets' | 'TNR';
 
 // ─── Mock pins from JSON data ─────────────────────────────────────────────────
 const MAP_PINS = [
   // NGOs (from NGO.json)
-  { id: 'ngo_001', type: 'ngo', icon: '🏢', lat: 3.155, lng: 101.765, title: 'SPCA Selangor' },
-  { id: 'ngo_002', type: 'ngo', icon: '🏢', lat: 1.328, lng: 103.870, title: 'SPCA Singapore' },
-  { id: 'ngo_003', type: 'ngo', icon: '🏢', lat: 1.334, lng: 103.851, title: 'Cat Welfare SG' },
-  { id: 'ngo_004', type: 'ngo', icon: '🏢', lat: 5.414, lng: 100.329, title: 'KucingCare' },
+  { id: 'ngo_001', type: 'ngo', icon: '🏢', lat: 3.155, lng: 101.765, title: 'SPCA Selangor', description: 'Protecting and caring for abandoned cats through rescue, adoption, education and community feeding.', address: 'Ampang, Selangor', followers: '5231', volunteers: '183 volunteers' },
+  { id: 'ngo_002', type: 'ngo', icon: '🏢', lat: 1.328, lng: 103.870, title: 'SPCA Singapore', description: 'Improving animal welfare through rescue, education and responsible pet ownership.', address: 'Mount Vernon, Singapore', followers: '10420', volunteers: '265 volunteers' },
+  { id: 'ngo_003', type: 'ngo', icon: '🏢', lat: 1.334, lng: 103.851, title: 'Cat Welfare SG', description: 'Building a safer environment for community cats through education and sterilisation.', address: 'Toa Payoh, Singapore', followers: '8120', volunteers: '148 volunteers' },
+  { id: 'ngo_004', type: 'ngo', icon: '🏢', lat: 5.414, lng: 100.329, title: 'KucingCare', description: 'Local rescue initiative helping stray cats with feeding, treatment and adoption.', address: 'George Town, Penang', followers: '2789', volunteers: '91 volunteers' },
   // Vets (from vets.json)
-  { id: 'vet_001', type: 'vet', icon: '🩺', lat: 3.107, lng: 101.607, title: 'Dr Priya Sharma' },
-  { id: 'vet_002', type: 'vet', icon: '🩺', lat: 5.363, lng: 100.460, title: 'Dr Kevin Ong' },
-  { id: 'vet_003', type: 'vet', icon: '🩺', lat: 3.049, lng: 101.586, title: 'Dr Lim Pet Clinic' },
+  { id: 'vet_001', type: 'vet', icon: '🩺', lat: 3.107, lng: 101.607, title: 'Dr Priya Sharma', description: 'Veterinarian passionate about community cats and emergency rescue.', address: 'Petaling Jaya, Selangor', followers: '1623', volunteers: '⭐ 4.9' },
+  { id: 'vet_002', type: 'vet', icon: '🩺', lat: 5.363, lng: 100.460, title: 'Dr Kevin Ong', description: 'Small animal veterinarian with experience in surgery and rescue medicine.', address: 'Bukit Mertajam, Penang', followers: '2148', volunteers: '⭐ 4.8' },
+  { id: 'vet_003', type: 'vet', icon: '🩺', lat: 3.049, lng: 101.586, title: 'Dr Lim Pet Clinic', description: 'Affordable veterinary services with support for stray animal welfare.', address: 'Subang Jaya, Selangor', followers: '3578', volunteers: '⭐ 4.7' },
   // Feeders (from smartFeeders.json)
   { id: 'feeder_001', type: 'feeder', icon: '🍽️', lat: 3.155, lng: 101.770, title: 'Cats Canteen' },
   { id: 'feeder_002', type: 'feeder', icon: '🍽️', lat: 1.334, lng: 103.855, title: 'Home for Cats' },
@@ -77,7 +78,7 @@ const RadarPulse = () => {
     <>
       <Animated.View style={getStyle(pulse1)} />
       <Animated.View style={getStyle(pulse2)} />
-      <View style={styles.radarDot} />
+      <Image source={require('@/assets/icons/catIcon.jpg')} style={styles.radarDot} />
     </>
   );
 };
@@ -88,7 +89,8 @@ export default function DiscoverMapScreen() {
   const mapRef = useRef<MapView>(null);
   const [activeFilter, setActiveFilter] = useState<MapFilterKey>('All');
   const [pins, setPins] = useState(MAP_PINS);
-  const [selectedOrg, setSelectedOrg] = useState<{ id: string; title: string; type: string } | null>(null);
+  const [selectedOrg, setSelectedOrg] = useState<{ id: string; title: string; type: string; description?: string; address?: string; followers?: string; volunteers?: string } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<{ id: string; title: string; address?: string } | null>(null);
   const [region, setRegion] = useState({
     latitude: 3.139,
     longitude: 101.6869,
@@ -231,12 +233,9 @@ export default function DiscoverMapScreen() {
               title={pin.title}
               onPress={() => {
                 if (pin.type === 'ngo' || pin.type === 'vet') {
-                  setSelectedOrg({ id: pin.id, title: pin.title, type: pin.type });
-                }
-              }}
-              onCalloutPress={() => {
-                if (pin.type === 'community') {
-                  router.push({ pathname: '/eventDetail', params: { id: pin.id, title: pin.title, location: pin.title } });
+                  setSelectedOrg({ id: pin.id, title: pin.title, type: pin.type, description: (pin as any).description, address: (pin as any).address, followers: (pin as any).followers, volunteers: (pin as any).volunteers });
+                } else if (pin.type === 'community') {
+                  setSelectedEvent({ id: pin.id, title: pin.title, address: (pin as any).address });
                 }
               }}
             >
@@ -247,7 +246,11 @@ export default function DiscoverMapScreen() {
                 pin.type === 'ngo' && styles.pinBubbleOutline,
                 pin.type === 'tnr' && styles.pinBubbleTnr,
               ]}>
-                <Text style={styles.pinIcon}>{pin.icon}</Text>
+                {pin.type === 'feeder' ? (
+                  <Image source={require('@/assets/icons/smartFeedericon.png')} style={{ width: 22, height: 22 }} resizeMode="contain" />
+                ) : (
+                  <Text style={styles.pinIcon}>{pin.icon}</Text>
+                )}
               </View>
             </Marker>
           ))}
@@ -287,7 +290,7 @@ export default function DiscoverMapScreen() {
             <View style={styles.sheetHandle} />
             <View style={styles.sheetContent}>
               <Image
-                source={{ uri: `https://api.dicebear.com/9.x/initials/png?seed=${selectedOrg?.title || 'org'}&size=80` }}
+                source={getAvatarForType(selectedOrg?.type || 'ngo')}
                 style={styles.sheetAvatar}
               />
               <Text style={styles.sheetName}>{selectedOrg?.title}</Text>
@@ -296,16 +299,44 @@ export default function DiscoverMapScreen() {
                   {selectedOrg?.type === 'vet' ? 'Certified Vet' : 'Certified NGO'}
                 </Text>
               </View>
-              <Text style={styles.sheetSubtext}>Tap below to view full profile</Text>
+              {selectedOrg?.address && <Text style={styles.sheetSubtext}>📍 {selectedOrg.address}</Text>}
+              {selectedOrg?.followers && <Text style={styles.sheetSubtext}>👥 {selectedOrg.followers} followers</Text>}
+              {selectedOrg?.description && <Text style={styles.sheetDesc} numberOfLines={2}>{selectedOrg.description}</Text>}
               <TouchableOpacity
                 style={styles.sheetViewBtn}
                 onPress={() => {
                   const org = selectedOrg;
                   setSelectedOrg(null);
-                  if (org) router.push({ pathname: '/orgProfile', params: { id: org.id, name: org.title, type: org.type } });
+                  if (org) router.push({ pathname: '/orgProfile', params: { id: org.id, name: org.title, type: org.type, followers: org.followers || '0', volunteers: org.volunteers || '0' } });
                 }}
               >
                 <Text style={styles.sheetViewBtnText}>View Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+      {/* Bottom Sheet for Event preview */}
+      <Modal visible={!!selectedEvent} transparent animationType="slide">
+        <Pressable style={styles.sheetOverlay} onPress={() => setSelectedEvent(null)}>
+          <View style={styles.sheetCard}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetContent}>
+              <Image source={require('@/assets/images/eventCover1.png')} style={{ width: 80, height: 80, borderRadius: 16, marginBottom: 12 }} />
+              <Text style={styles.sheetName}>{selectedEvent?.title}</Text>
+              <View style={styles.sheetBadge}>
+                <Text style={styles.sheetBadgeText}>📅 Event</Text>
+              </View>
+              {selectedEvent?.address && <Text style={styles.sheetSubtext}>📍 {selectedEvent.address}</Text>}
+              <TouchableOpacity
+                style={styles.sheetViewBtn}
+                onPress={() => {
+                  const evt = selectedEvent;
+                  setSelectedEvent(null);
+                  if (evt) router.push({ pathname: '/eventDetail', params: { id: evt.id, title: evt.title, location: evt.address || evt.title } });
+                }}
+              >
+                <Text style={styles.sheetViewBtnText}>View Event</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -340,7 +371,7 @@ const styles = StyleSheet.create({
   mapContainer: { flex: 1, position: 'relative' },
   // Radar
   radarContainer: { width: 80, height: 80, alignItems: 'center', justifyContent: 'center' },
-  radarDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#2D5016', borderWidth: 3, borderColor: WHITE, position: 'absolute' },
+  radarDot: { width: 24, height: 24, borderRadius: 12, position: 'absolute', borderWidth: 2, borderColor: WHITE },
   // Pins
   pinBubble: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: GREY_BG },
   pinBubbleDark: { backgroundColor: DARK },
@@ -370,7 +401,8 @@ const styles = StyleSheet.create({
   sheetName: { fontSize: 20, fontWeight: '700', color: DARK, marginBottom: 6 },
   sheetBadge: { backgroundColor: '#F2F2F7', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12, marginBottom: 8 },
   sheetBadgeText: { fontSize: 12, fontWeight: '600', color: '#6b6b6b' },
-  sheetSubtext: { fontSize: 13, color: '#8E8E93', marginBottom: 16 },
+  sheetSubtext: { fontSize: 13, color: '#8E8E93', marginBottom: 4 },
+  sheetDesc: { fontSize: 13, color: '#6b6b6b', textAlign: 'center', lineHeight: 18, marginTop: 4, marginBottom: 16, paddingHorizontal: 12 },
   sheetViewBtn: { backgroundColor: DARK, paddingVertical: 14, paddingHorizontal: 48, borderRadius: 24 },
   sheetViewBtnText: { color: WHITE, fontSize: 15, fontWeight: '600' },
 });

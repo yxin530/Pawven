@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getPostsByOrg } from '@/data/posts';
+import { getRandomAvatar } from '@/constants/Avatars';
 
 export default function CommunityProfileScreen() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function CommunityProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <Image
-            source={{ uri: `https://api.dicebear.com/9.x/initials/png?seed=${communityName}&size=160` }}
+            source={getRandomAvatar(2)}
             style={styles.avatar}
           />
         </View>
@@ -129,7 +130,7 @@ export default function CommunityProfileScreen() {
             {[0, 1, 2, 3, 4].map(i => (
               <Image
                 key={i}
-                source={{ uri: `https://api.dicebear.com/9.x/avataaars/png?seed=member${i}&size=48` }}
+                source={getRandomAvatar(i)}
                 style={[styles.memberAvatar, { marginLeft: i === 0 ? 0 : -8 }]}
               />
             ))}

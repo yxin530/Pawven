@@ -48,6 +48,17 @@ export default function CreateProfileScreen() {
     // Store profile data globally so profile screens can use it
     (global as any).__pawven_name = name.trim();
     (global as any).__pawven_bio = bio.trim();
+    // If user didn't pick an avatar, assign a default based on role
+    if (!avatarUri) {
+      const Image = require('react-native').Image;
+      if (role === 'vet') {
+        (global as any).__pawven_avatar_local = 'vetProfilepic';
+      } else {
+        // Random between profile1 and profile2 for normal/ngo users
+        const randomIdx = Math.random() > 0.5 ? 1 : 2;
+        (global as any).__pawven_avatar_local = `randomProfile${randomIdx}`;
+      }
+    }
     // Save to backend (fire and forget)
     try {
       await fetch(`${Config.API_BASE_URL}/users`, {

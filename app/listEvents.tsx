@@ -21,36 +21,36 @@ interface EventItem {
 
 const FALLBACK_DATA: EventItem[] = [
   {
-    id: '1',
+    id: 'event_001',
     title: 'Workshop by SPCA',
-    date: 'Aug 2',
-    location: 'SPCA Selangor HQ',
+    date: 'Sat, Aug 2',
+    location: 'SPCA Selangor HQ, Ampang',
     attending: 43,
     category: 'Workshop',
   },
   {
-    id: '2',
+    id: 'event_002',
     title: 'Vet Volunteer Day',
-    date: 'Aug 9',
-    location: 'PJ Animal Clinic',
+    date: 'Sat, Aug 9',
+    location: 'Petaling Jaya, Selangor',
     attending: 37,
     category: 'Volunteer',
   },
   {
-    id: '3',
-    title: 'Colony Count',
-    date: 'Aug 15',
+    id: 'event_003',
+    title: 'Colony Count in Taman Desa',
+    date: 'Fri, Aug 15',
     location: 'Taman Desa, KL',
     attending: 22,
-    category: 'TNR',
+    category: 'Community',
   },
   {
-    id: '4',
+    id: 'event_004',
     title: 'Cat Owners Hangout',
-    date: 'Aug 23',
-    location: 'Bangsar South',
+    date: 'Sat, Aug 23',
+    location: 'George Town, Penang',
     attending: 58,
-    category: 'Social',
+    category: 'Meetup',
   },
 ];
 
@@ -93,7 +93,7 @@ export default function ListEvents() {
       onPress={() =>
         router.push({
           pathname: '/eventDetail',
-          params: { id: item.id, title: item.title, location: item.location },
+          params: { id: item.id, title: item.title, location: item.location, date: item.date, going: String(item.attending) },
         })
       }
     >

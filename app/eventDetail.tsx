@@ -14,16 +14,15 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Config } from '@/constants/Config';
+import { getRandomAvatar, getVetAvatar } from '@/constants/Avatars';
 
-// Generic avatar
-const AvatarIcon = ({ uri, size = 40 }: { uri?: string; size?: number }) => {
+// Generic avatar — uses random cat profile pics
+const AvatarIcon = ({ uri, size = 40, index = 0 }: { uri?: string; size?: number; index?: number }) => {
   if (uri) {
     return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
   }
   return (
-    <View style={[styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Text style={{ fontSize: size * 0.4 }}>👤</Text>
-    </View>
+    <Image source={getRandomAvatar(index)} style={{ width: size, height: size, borderRadius: size / 2 }} />
   );
 };
 
@@ -46,10 +45,10 @@ export default function EventDetailScreen() {
 
   const eventId = params.id || '';
   const [eventTitle, setEventTitle] = useState(params.title || 'Event Title');
-  const [dateRange, setDateRange] = useState(params.date || '');
-  const [locationName, setLocationName] = useState(params.location || 'Venue Name');
-  const [address, setAddress] = useState(params.address || '');
-  const [description, setDescription] = useState(params.description || '');
+  const [dateRange, setDateRange] = useState(params.date || 'Sat, Aug 2, 10:00 - 13:00');
+  const [locationName, setLocationName] = useState(params.location || 'Community Hall, Taman Desa');
+  const [address, setAddress] = useState(params.address || 'Jalan Desa Utama, Taman Desa, 58100 Kuala Lumpur');
+  const [description, setDescription] = useState(params.description || 'Join us for a community gathering to discuss colony care, feeding schedules, and upcoming TNR drives. All cat lovers welcome!');
   const [goingCount, setGoingCount] = useState(parseInt(params.going || '0', 10));
   const [coverImageUri, setCoverImageUri] = useState(params.coverPhoto || '');
   const [requireApproval, setRequireApproval] = useState(params.requireApproval === 'true');
@@ -58,10 +57,10 @@ export default function EventDetailScreen() {
   const [regState, setRegState] = useState<RegistrationState>(
     params.visibility === 'Private' ? 'invited-only' : 'register'
   );
-  const [isInvited, setIsInvited] = useState(false); // Will be true if user was invited by host
-  const [attendees, setAttendees] = useState<{ id: string; uri?: string }[]>([
-    { id: 'a1' }, { id: 'a2' }, { id: 'a3' }, { id: 'a4' }, { id: 'a5' },
-  ]);
+  const [isInvited, setIsInvited] = useState(false);
+  // Generate attendee avatars based on going count
+  const initialAttendees = Array.from({ length: Math.min(parseInt(params.going || '0', 10) || 5, 10) }, (_, i) => ({ id: `a${i}` }));
+  const [attendees, setAttendees] = useState<{ id: string; uri?: string }[]>(initialAttendees);
   const [showMorePopover, setShowMorePopover] = useState(false);
 
   // Host info — loaded from backend or defaults
@@ -270,14 +269,15 @@ export default function EventDetailScreen() {
           {coverImageUri ? (
             <Image source={{ uri: coverImageUri }} style={styles.coverImage} />
           ) : (
-            <View style={[styles.coverImage, styles.coverPlaceholder]}>
-              <Text style={{ fontSize: 40 }}>🖼️</Text>
-            </View>
+            <Image
+              source={eventId && eventId.endsWith('2') || eventId.endsWith('4') ? require('@/assets/images/eventCover2.png') : require('@/assets/images/eventCover1.png')}
+              style={styles.coverImage}
+            />
           )}
         </View>
 
         <Text style={styles.eventTitleLarge}>{eventTitle}</Text>
-        <Text style={styles.dateRange}>{dateRange}</Text>
+        <Text style={styles.dateRange}>📅 {dateRange}</Text>
 
         {/* Action buttons */}
         <View style={styles.actionRow}>
@@ -330,28 +330,28 @@ export default function EventDetailScreen() {
         <View style={styles.divider} />
 
         {/* Who's going */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.sectionLabel}>Who's Going</Text>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/eventAttendees', params: { id: eventId, title: eventTitle } })}>
-            <Text style={{ fontSize: 13, color: '#7FB8FF' }}>Manage →</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.goingCount}>{goingCount} Going</Text>
-
-        <View style={styles.attendeeRow}>
-          {attendees.slice(0, 6).map((attendee, index) => (
-            <View key={attendee.id} style={[styles.attendeeAvatarWrap, { marginLeft: index === 0 ? 0 : -10 }]}>
-              <AvatarIcon uri={attendee.uri} size={30} />
+        <Text style={styles.sectionLabel}>Who's Going</Text>
+        {goingCount > 0 ? (
+          <>
+            <Text style={styles.goingCount}>{goingCount} Going</Text>
+            <View style={styles.attendeeRow}>
+              {attendees.slice(0, 6).map((attendee, index) => (
+                <View key={attendee.id} style={[styles.attendeeAvatarWrap, { marginLeft: index === 0 ? 0 : -10 }]}>
+                  <AvatarIcon uri={attendee.uri} size={30} index={index} />
+                </View>
+              ))}
+              {goingCount > 6 && (
+                <View style={[styles.attendeeAvatarWrap, { marginLeft: -10 }]}>
+                  <View style={[styles.avatarFallback, { width: 30, height: 30, borderRadius: 15 }]}>
+                    <Text style={{ fontSize: 10, color: '#FFF' }}>+{goingCount - 6}</Text>
+                  </View>
+                </View>
+              )}
             </View>
-          ))}
-          {goingCount > 6 && (
-            <View style={[styles.attendeeAvatarWrap, { marginLeft: -10 }]}>
-              <View style={[styles.avatarFallback, { width: 30, height: 30, borderRadius: 15 }]}>
-                <Text style={{ fontSize: 10, color: '#FFF' }}>+{goingCount - 6}</Text>
-              </View>
-            </View>
-          )}
-        </View>
+          </>
+        ) : (
+          <Text style={{ fontSize: 14, color: '#8A8A8E', marginBottom: 10 }}>No one has registered yet. Be the first!</Text>
+        )}
 
         <View style={styles.divider} />
 
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   topBarTitle: { flex: 1, marginHorizontal: 12, fontSize: 15, fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
   coverWrapper: { marginTop: 8, marginBottom: 16 },
-  coverImage: { width: '100%', aspectRatio: 1.4, borderRadius: 20 },
+  coverImage: { width: '100%', height: 200, borderRadius: 20 },
   coverPlaceholder: { backgroundColor: '#2A2E33', alignItems: 'center', justifyContent: 'center' },
   eventTitleLarge: { fontSize: 24, fontWeight: '700', color: '#FFFFFF', lineHeight: 30 },
   dateRange: { marginTop: 8, fontSize: 14, color: '#B8B8BC' },

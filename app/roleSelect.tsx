@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
@@ -22,21 +23,33 @@ const ROLE_OPTIONS: RoleOption[] = [
     id: 'ngo',
     title: 'NGO / Organisation',
     description: 'We run rescue, adoption, or welfare programmes for cats and other animals.',
-    icon: '🏢',
+    icon: 'ngo',
   },
   {
     id: 'vet',
     title: 'Veterinarian',
     description: "I'm a licensed vet or vet technician providing medical care to cats.",
-    icon: '🩺',
+    icon: 'vet',
   },
   {
     id: 'cat-lover',
     title: 'Cat Lover',
     description: 'I love cats and want to connect, adopt, foster, or support the community.',
-    icon: '❤️',
+    icon: 'cat-lover',
   },
 ];
+
+const ROLE_ICONS: Record<string, any> = {
+  'ngo': require('@/assets/icons/ngoIcon.png'),
+  'vet': require('@/assets/icons/vetIcon.png'),
+  'cat-lover': require('@/assets/icons/catLoverIcon.png'),
+};
+
+const ROLE_ICON_STYLES: Record<string, any> = {
+  'ngo': { width: 40, height: 40, borderRadius: 20 },
+  'vet': { width: 28, height: 28 },
+  'cat-lover': { width: 40, height: 40, borderRadius: 20 },
+};
 
 export default function OnboardingRoleScreen() {
   const router = useRouter();
@@ -91,7 +104,7 @@ export default function OnboardingRoleScreen() {
               activeOpacity={0.85}
             >
               <View style={[styles.optionIconCircle, isSelected && styles.optionIconCircleSelected]}>
-                <Text style={{ fontSize: 20 }}>{option.icon}</Text>
+                <Image source={ROLE_ICONS[option.icon]} style={ROLE_ICON_STYLES[option.icon]} resizeMode="contain" />
               </View>
 
               <View style={styles.optionTextWrapper}>

@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
+import { getRandomAvatar } from '@/constants/Avatars';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning 👋';
-  if (hour < 18) return 'Good afternoon 👋';
-  return 'Good evening 👋';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 // ─── Avatar Component ─────────────────────────────────────────────────────────
@@ -43,10 +44,10 @@ const Avatar = ({ size = 36, uri, fallback = '🧑' }: { size?: number; uri?: st
 };
 
 // Mini avatar for activity cards
-const MiniAvatar = ({ emoji = '🐱', index = 0 }: { emoji?: string; index?: number }) => (
+const MiniAvatar = ({ index = 0 }: { index?: number }) => (
   <View style={[styles.miniAvatar, { marginLeft: index === 0 ? 0 : -8, zIndex: 10 - index }]}>
     <Image
-      source={{ uri: `https://api.dicebear.com/9.x/thumbs/png?seed=cat${index}&size=48` }}
+      source={getRandomAvatar(index)}
       style={{ width: 24, height: 24, borderRadius: 12 }}
     />
   </View>
@@ -114,7 +115,7 @@ const Tag = ({ label }: { label: string }) => (
 const FeaturedActivityCard = ({ item, onPress }: { item: any; onPress: () => void }) => (
   <TouchableOpacity style={styles.featuredCard} onPress={onPress} activeOpacity={0.88}>
     <View style={styles.featuredBanner}>
-      <Text style={styles.featuredBannerLabel}>Community Feeding · Park Area</Text>
+      <Image source={require('@/assets/images/eventCover1.png')} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
     </View>
     <View style={styles.featuredBody}>
       <View style={styles.featuredMeta}>
@@ -187,6 +188,20 @@ const CommunityCard = ({ item }: { item: any }) => {
 export default function HomeScreen() {
   const router = useRouter();
   const user = { name: (global as any).__pawven_name || 'there' };
+
+  const DEFAULT_AVATARS: Record<string, any> = {
+    'randomProfile1': require('@/assets/images/randomProfile1.jpg'),
+    'randomProfile2': require('@/assets/images/randomProfile2.jpg'),
+    'vetProfilepic': require('@/assets/images/vetProfilepic.png'),
+  };
+
+  const getAvatarSource = () => {
+    const uri = (global as any).__pawven_avatar;
+    if (uri) return { uri };
+    const localKey = (global as any).__pawven_avatar_local;
+    if (localKey && DEFAULT_AVATARS[localKey]) return DEFAULT_AVATARS[localKey];
+    return require('@/assets/images/randomProfile1.jpg');
+  };
 
   // Fetch real events from backend
   const [activities, setActivities] = useState(UPCOMING_ACTIVITIES);
@@ -278,7 +293,7 @@ export default function HomeScreen() {
         </View>
         <View style={styles.topNavActions}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notificationEvent_screen')}>
-            <Text style={styles.iconBtnText}>🔔</Text>
+            <Image source={require('@/assets/icons/bellIcon.png')} style={{ width: 24, height: 24 }} resizeMode="contain" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {
             const role = (global as any).__pawven_role;
@@ -289,7 +304,7 @@ export default function HomeScreen() {
             }
           }}>
             <Image
-              source={{ uri: (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=72' }}
+              source={getAvatarSource()}
               style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: GREY_BG }}
             />
           </TouchableOpacity>
@@ -305,7 +320,10 @@ export default function HomeScreen() {
       >
         {/* ── Greeting ── */}
         <View style={styles.greetingSection}>
-          <Text style={styles.greetingLine}>{getGreeting()}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.greetingLine}>{getGreeting()}</Text>
+            <Image source={require('@/assets/icons/helloCat.jpg')} style={{ width: 28, height: 28, borderRadius: 14 }} />
+          </View>
           <Text style={styles.greetingName}>{user.name}</Text>
         </View>
 
@@ -347,9 +365,9 @@ export default function HomeScreen() {
 
         {activities.map(item =>
           item.type === 'featured' ? (
-            <FeaturedActivityCard key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.date || '', location: item.location } })} />
+            <FeaturedActivityCard key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.date || '', location: item.location, going: String(item.going || 0) } })} />
           ) : (
-            <ListActivityCard key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, location: item.location } })} />
+            <ListActivityCard key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: `${item.month} ${item.day}`, location: item.location } })} />
           )
         )}
 

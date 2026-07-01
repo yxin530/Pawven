@@ -28,8 +28,23 @@ export default function NGOVetProfileScreen() {
     (global as any).__pawven_bio || 'No bio yet. Tap Edit Profile to add one.'
   );
   const [avatar, setAvatar] = useState<string>(
-    (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=ngo&size=160'
+    (global as any).__pawven_avatar || ''
   );
+
+  const NGO_DEFAULT_AVATARS: Record<string, any> = {
+    'randomProfile1': require('@/assets/images/randomProfile1.jpg'),
+    'randomProfile2': require('@/assets/images/randomProfile2.jpg'),
+    'vetProfilepic': require('@/assets/images/vetProfilepic.png'),
+  };
+
+  const getAvatarSource = () => {
+    if (avatar) return { uri: avatar };
+    const localKey = (global as any).__pawven_avatar_local;
+    if (localKey && NGO_DEFAULT_AVATARS[localKey]) return NGO_DEFAULT_AVATARS[localKey];
+    const role = (global as any).__pawven_role;
+    if (role === 'vet') return require('@/assets/images/vetProfilepic.png');
+    return require('@/assets/images/randomProfile1.jpg');
+  };
 
   const [feederData, setFeederData] = useState([
     { name: 'No feeders yet', kibbles: '—', lastFed: '—' },
@@ -222,7 +237,7 @@ export default function NGOVetProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <View style={styles.avatarCircle}>
-            <Image source={{ uri: avatar }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+            <Image source={getAvatarSource()} style={{ width: 80, height: 80, borderRadius: 40 }} />
           </View>
         </View>
 
@@ -352,7 +367,7 @@ export default function NGOVetProfileScreen() {
             <Text style={styles.modalTitle}>Edit Profile</Text>
 
             <TouchableOpacity style={styles.avatarEditBtn} onPress={handleChangeAvatar}>
-              <Image source={{ uri: editAvatar }} style={styles.avatarEditImg} />
+              <Image source={editAvatar ? { uri: editAvatar } : getAvatarSource()} style={styles.avatarEditImg} />
               <Text style={styles.avatarEditLabel}>📷 Change Avatar</Text>
             </TouchableOpacity>
 

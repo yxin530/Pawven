@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Image,
   Modal,
   Pressable,
   SafeAreaView,
@@ -13,10 +14,10 @@ import {
 import { useRouter } from "expo-router";
 
 const PawIcon = () => <Text style={styles.appIconEmoji}>🐾</Text>;
-const TNRIcon = () => <Text style={styles.featureIconEmoji}>🐱</Text>;
-const NearbyIcon = () => <Text style={styles.featureIconEmoji}>📍</Text>;
+const TNRIcon = () => <Image source={require('@/assets/icons/tnrIcon.jpg')} style={{ width: 20, height: 20, borderRadius: 10 }} />;
+const NearbyIcon = () => <Image source={require('@/assets/icons/pinMarker.jpg')} style={{ width: 20, height: 20, borderRadius: 10 }} />;
 const MapIcon = () => <Text style={styles.listIconEmoji}>🗺️</Text>;
-const ReportIcon = () => <Text style={styles.listIconEmoji}>📋</Text>;
+const ReportIcon = () => <Image source={require('@/assets/icons/tnrIcon.jpg')} style={{ width: 20, height: 20, borderRadius: 10 }} />;
 const CommunityIcon = () => <Text style={styles.listIconEmoji}>👥</Text>;
 
 const HeroBubbles = () => (

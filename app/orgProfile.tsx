@@ -12,6 +12,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Config } from '@/constants/Config';
 import { getPostsByOrg } from '@/data/posts';
+import { getAvatarForType } from '@/constants/Avatars';
 
 export default function OrgProfileScreen() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function OrgProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <Image
-            source={{ uri: logoUrl || `https://api.dicebear.com/9.x/initials/png?seed=${orgName}&size=160` }}
+            source={logoUrl ? { uri: logoUrl } : getAvatarForType(orgType)}
             style={styles.avatar}
           />
         </View>

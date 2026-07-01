@@ -30,6 +30,19 @@ export default function ProfileScreen() {
   const [avatar, setAvatar] = useState((global as any).__pawven_avatar || '');
   const [coverPhoto, setCoverPhoto] = useState<string | null>(null);
 
+  const DEFAULT_AVATARS: Record<string, any> = {
+    'randomProfile1': require('@/assets/images/randomProfile1.jpg'),
+    'randomProfile2': require('@/assets/images/randomProfile2.jpg'),
+    'vetProfilepic': require('@/assets/images/vetProfilepic.png'),
+  };
+
+  const getAvatarSource = () => {
+    if (avatar) return { uri: avatar };
+    const localKey = (global as any).__pawven_avatar_local;
+    if (localKey && DEFAULT_AVATARS[localKey]) return DEFAULT_AVATARS[localKey];
+    return require('@/assets/images/randomProfile1.jpg');
+  };
+
   // Edit Profile Modal
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editName, setEditName] = useState(name);
@@ -130,7 +143,7 @@ export default function ProfileScreen() {
       <View style={styles.avatarWrapper}>
         <View style={styles.avatarCircle}>
           <Image
-            source={{ uri: avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=160' }}
+            source={getAvatarSource()}
             style={styles.avatarImage}
           />
         </View>
@@ -249,7 +262,7 @@ export default function ProfileScreen() {
           <Text style={styles.modalTitle}>Edit Profile</Text>
 
           <TouchableOpacity style={styles.avatarEditBtnModal} onPress={handleChangeAvatar}>
-            <Image source={{ uri: editAvatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=160' }} style={styles.avatarEditImg} />
+            <Image source={editAvatar ? { uri: editAvatar } : getAvatarSource()} style={styles.avatarEditImg} />
             <Text style={styles.avatarEditLabelModal}>📷 Change Avatar</Text>
           </TouchableOpacity>
 
