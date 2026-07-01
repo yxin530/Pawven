@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { Config } from '@/constants/Config';
 
@@ -357,7 +358,14 @@ const TNRReportCasesScreen: React.FC<TNRReportCasesScreenProps> = ({
         </View>
 
         {/* Case Cards */}
-        {filteredCases.map((c) => {
+        {filteredCases.length === 0 ? (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <Image source={require('@/assets/images/tnr_emptystate.jpg')} style={{ width: 160, height: 160, borderRadius: 12, marginBottom: 16 }} resizeMode="contain" />
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#111', marginBottom: 6 }}>No TNR cases yet</Text>
+            <Text style={{ fontSize: 13, color: '#888', textAlign: 'center' }}>Pending cases from users will appear here for you to accept.</Text>
+          </View>
+        ) : (
+        filteredCases.map((c) => {
           const badgeStyle = getStatusBadgeStyle(c.status);
           return (
             <View key={c.id} style={styles.caseCard}>
@@ -521,7 +529,8 @@ const TNRReportCasesScreen: React.FC<TNRReportCasesScreenProps> = ({
               )}
             </View>
           );
-        })}
+        })
+        )}
       </ScrollView>
     </SafeAreaView>
   );

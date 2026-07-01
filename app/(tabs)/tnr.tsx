@@ -10,6 +10,7 @@ import {
   StatusBar,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -276,9 +277,19 @@ function TNRWithCases({ onReport }: { onReport: () => void }) {
         </ScrollView>
 
         {/* Case cards */}
-        {filtered.map(item => (
-          <CaseCard key={item.id} item={item} />
-        ))}
+        {filtered.length === 0 ? (
+          <View style={styles.emptyStateCard}>
+            <Image source={require('@/assets/images/tnr_emptystate.jpg')} style={styles.emptyStateImage} resizeMode="contain" />
+            <Text style={styles.emptyTitle}>No cases yet</Text>
+            <Text style={styles.emptyBody}>
+              Start reporting cats who need TNR in your area.
+            </Text>
+          </View>
+        ) : (
+          filtered.map(item => (
+            <CaseCard key={item.id} item={item} />
+          ))
+        )}
 
         {/* Report button — moves with scroll */}
         <TouchableOpacity
@@ -342,13 +353,10 @@ function TNREmpty({ onReport }: { onReport: () => void }) {
 
         {/* Empty state */}
         <View style={styles.emptyStateCard}>
-          <View style={styles.emptyIconCircle}>
-            <Text style={styles.emptyIconText}>🐱</Text>
-          </View>
+          <Image source={require('@/assets/images/tnr_emptystate.jpg')} style={styles.emptyStateImage} resizeMode="contain" />
           <Text style={styles.emptyTitle}>No cases reported yet</Text>
           <Text style={styles.emptyBody}>
-            You haven't reported any stray cat cases.{'\n'}Start by reporting
-            your first TNR case to{'\n'}track your progress.
+            Start reporting cats who need TNR in your area.
           </Text>
         </View>
 
@@ -951,6 +959,12 @@ const styles = StyleSheet.create({
     padding: 32,
     alignItems: 'center',
     marginBottom: 24,
+  },
+  emptyStateImage: {
+    width: 160,
+    height: 160,
+    marginBottom: 16,
+    borderRadius: 12,
   },
   emptyIconCircle: {
     width: 72,

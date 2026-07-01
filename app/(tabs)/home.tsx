@@ -277,7 +277,7 @@ export default function HomeScreen() {
           <Text style={styles.logoText}>Pawven</Text>
         </View>
         <View style={styles.topNavActions}>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notificationEvent_screen')}>
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {
