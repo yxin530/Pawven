@@ -16,13 +16,15 @@ import { Config } from '@/constants/Config';
 export default function NGOVetProfileScreen() {
   const router = useRouter();
   const role = (global as any).__pawven_role === 'vet' ? 'Vet' : 'NGO';
-  const orgName = role === 'Vet' ? 'Dr. Lim Cat Clinic' : 'Paws & Care NGO';
+  const orgName = (global as any).__pawven_name || (role === 'Vet' ? 'Dr. Lim Cat Clinic' : 'Paws & Care NGO');
 
   const [feederData, setFeederData] = useState([
-    { name: 'Feeder #1', kibbles: '1,240 g', lastFed: '2h ago' },
-    { name: 'Feeder #2', kibbles: '890 g', lastFed: '5h ago' },
-    { name: 'Feeder #3', kibbles: '2,100 g', lastFed: '1d ago' },
+    { name: 'No feeders yet', kibbles: '—', lastFed: '—' },
   ]);
+  const [followers, setFollowers] = useState(0);
+  const [colonies, setColonies] = useState(0);
+  const [feedersCount, setFeedersCount] = useState(0);
+  const [feedings, setFeedings] = useState(0);
 
   useEffect(() => {
     const fetchFeeders = async () => {
@@ -31,6 +33,7 @@ export default function NGOVetProfileScreen() {
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
+          setFeedersCount(data.length);
           const mapped = data.map((f: any, idx: number) => {
             const lastDispensed = f.last_dispensed ? getTimeAgoSimple(f.last_dispensed) : 'N/A';
             return {
@@ -41,8 +44,8 @@ export default function NGOVetProfileScreen() {
           });
           setFeederData(mapped);
         }
-      } catch (e) {
-        console.log('Using mock feeder data:', e);
+      } catch {
+        // Keep empty state for new orgs
       }
     };
     fetchFeeders();
@@ -95,7 +98,7 @@ export default function NGOVetProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <View style={styles.avatarCircle}>
-            <Image source={{ uri: 'https://api.dicebear.com/9.x/avataaars/png?seed=ngo&size=160' }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+            <Image source={{ uri: (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=ngo&size=160' }} style={{ width: 80, height: 80, borderRadius: 40 }} />
           </View>
         </View>
 
@@ -106,14 +109,14 @@ export default function NGOVetProfileScreen() {
             <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>Certified {role}</Text></View>
           </View>
           <Text style={styles.locationText}>📍 Kuala Lumpur, Malaysia</Text>
-          <Text style={styles.bioText}>Dedicated to the welfare of community cats and strays. We manage 12 colonies across KL and provide veterinary support, TNR programs, and smart feeding solutions.</Text>
+          <Text style={styles.bioText}>{(global as any).__pawven_bio || 'No bio yet. Tap Edit Profile to add one.'}</Text>
         </View>
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <View style={styles.statItem}><Text style={styles.statNumber}>12</Text><Text style={styles.statLabel}>Colonies</Text></View>
-          <View style={[styles.statItem, styles.statItemBorder]}><Text style={styles.statNumber}>8</Text><Text style={styles.statLabel}>Feeders</Text></View>
-          <View style={styles.statItem}><Text style={styles.statNumber}>340</Text><Text style={styles.statLabel}>Feedings</Text></View>
+          <View style={styles.statItem}><Text style={styles.statNumber}>{followers}</Text><Text style={styles.statLabel}>Followers</Text></View>
+          <View style={[styles.statItem, styles.statItemBorder]}><Text style={styles.statNumber}>{feedersCount}</Text><Text style={styles.statLabel}>Feeders</Text></View>
+          <View style={styles.statItem}><Text style={styles.statNumber}>{feedings}</Text><Text style={styles.statLabel}>Feedings</Text></View>
         </View>
 
         {/* Action Buttons */}

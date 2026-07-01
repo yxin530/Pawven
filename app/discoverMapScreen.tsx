@@ -8,6 +8,9 @@ import {
   ScrollView,
   Animated,
   Easing,
+  Modal,
+  Pressable,
+  Image,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
@@ -27,6 +30,8 @@ const MAP_PINS = [
 const MAP_FILTERS: MapFilterKey[] = ['All', 'Feeder', 'Events', 'NGOs', 'Vets'];
 
 // ─── Radar Pulse Component ────────────────────────────────────────────────────
+const RADAR_SIZE = 80;
+
 const RadarPulse = () => {
   const pulse1 = useRef(new Animated.Value(0)).current;
   const pulse2 = useRef(new Animated.Value(0)).current;
@@ -47,20 +52,20 @@ const RadarPulse = () => {
 
   const getStyle = (anim: Animated.Value) => ({
     position: 'absolute' as const,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: RADAR_SIZE,
+    height: RADAR_SIZE,
+    borderRadius: RADAR_SIZE / 2,
     backgroundColor: 'rgba(45, 80, 22, 0.15)',
-    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 2.5] }) }],
+    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 2] }) }],
     opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
   });
 
   return (
-    <View style={styles.radarContainer}>
+    <>
       <Animated.View style={getStyle(pulse1)} />
       <Animated.View style={getStyle(pulse2)} />
       <View style={styles.radarDot} />
-    </View>
+    </>
   );
 };
 
@@ -70,6 +75,7 @@ export default function DiscoverMapScreen() {
   const mapRef = useRef<MapView>(null);
   const [activeFilter, setActiveFilter] = useState<MapFilterKey>('All');
   const [pins, setPins] = useState(MAP_PINS);
+  const [selectedOrg, setSelectedOrg] = useState<{ id: string; title: string; type: string } | null>(null);
   const [region, setRegion] = useState({
     latitude: 3.139,
     longitude: 101.6869,
@@ -80,16 +86,17 @@ export default function DiscoverMapScreen() {
   useEffect(() => {
     const fetchPins = async () => {
       try {
-        const [feedersRes, orgsRes] = await Promise.all([
+        const [feedersRes, orgsRes, eventsRes] = await Promise.all([
           fetch(`${Config.API_BASE_URL}/feeders`),
           fetch(`${Config.API_BASE_URL}/orgs`),
+          fetch(`${Config.API_BASE_URL}/events`),
         ]);
         const newPins: typeof MAP_PINS = [];
         if (feedersRes.ok) {
           const feeders = await feedersRes.json();
           if (Array.isArray(feeders)) {
             feeders.forEach((f: any, idx: number) => {
-              if (f.lat && f.lng) {
+              if (f.lat && f.lng && f.status === 'online') {
                 newPins.push({ id: `feeder-${f.id || idx}`, type: 'feeder', icon: '🍽️', lat: f.lat, lng: f.lng, title: f.name || `Feeder ${idx + 1}` });
               }
             });
@@ -103,6 +110,16 @@ export default function DiscoverMapScreen() {
                 const type = o.type === 'vet' ? 'vet' : 'ngo';
                 const icon = o.type === 'vet' ? '🩺' : '🏢';
                 newPins.push({ id: `org-${o.id || idx}`, type, icon, lat: o.lat, lng: o.lng, title: o.name || `Org ${idx + 1}` });
+              }
+            });
+          }
+        }
+        if (eventsRes.ok) {
+          const events = await eventsRes.json();
+          if (Array.isArray(events)) {
+            events.forEach((e: any, idx: number) => {
+              if (e.lat && e.lng) {
+                newPins.push({ id: `event-${e.id || idx}`, type: 'community', icon: '📅', lat: e.lat, lng: e.lng, title: e.title || `Event ${idx + 1}` });
               }
             });
           }
@@ -174,8 +191,10 @@ export default function DiscoverMapScreen() {
           showsMyLocationButton={false}
         >
           {/* User location marker with radar */}
-          <Marker coordinate={{ latitude: 3.139, longitude: 101.6869 }} anchor={{ x: 0.5, y: 0.5 }}>
-            <RadarPulse />
+          <Marker coordinate={{ latitude: 3.139, longitude: 101.6869 }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={true}>
+            <View style={styles.radarContainer}>
+              <RadarPulse />
+            </View>
           </Marker>
 
           {/* Filtered pins */}
@@ -184,6 +203,16 @@ export default function DiscoverMapScreen() {
               key={pin.id}
               coordinate={{ latitude: pin.lat, longitude: pin.lng }}
               title={pin.title}
+              onPress={() => {
+                if (pin.type === 'ngo' || pin.type === 'vet') {
+                  setSelectedOrg({ id: pin.id, title: pin.title, type: pin.type });
+                }
+              }}
+              onCalloutPress={() => {
+                if (pin.type === 'community') {
+                  router.push({ pathname: '/eventDetail', params: { id: pin.id, title: pin.title, location: pin.title } });
+                }
+              }}
             >
               <View style={[
                 styles.pinBubble,
@@ -223,6 +252,38 @@ export default function DiscoverMapScreen() {
           <Text style={styles.createEventBtnText}>+</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Bottom Sheet for NGO/Vet profile preview */}
+      <Modal visible={!!selectedOrg} transparent animationType="slide">
+        <Pressable style={styles.sheetOverlay} onPress={() => setSelectedOrg(null)}>
+          <View style={styles.sheetCard}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetContent}>
+              <Image
+                source={{ uri: `https://api.dicebear.com/9.x/initials/png?seed=${selectedOrg?.title || 'org'}&size=80` }}
+                style={styles.sheetAvatar}
+              />
+              <Text style={styles.sheetName}>{selectedOrg?.title}</Text>
+              <View style={styles.sheetBadge}>
+                <Text style={styles.sheetBadgeText}>
+                  {selectedOrg?.type === 'vet' ? 'Certified Vet' : 'Certified NGO'}
+                </Text>
+              </View>
+              <Text style={styles.sheetSubtext}>Tap below to view full profile</Text>
+              <TouchableOpacity
+                style={styles.sheetViewBtn}
+                onPress={() => {
+                  const org = selectedOrg;
+                  setSelectedOrg(null);
+                  if (org) router.push({ pathname: '/orgProfile', params: { id: org.id, name: org.title, type: org.type } });
+                }}
+              >
+                <Text style={styles.sheetViewBtnText}>View Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -251,8 +312,8 @@ const styles = StyleSheet.create({
   chipTextActive: { color: WHITE },
   mapContainer: { flex: 1, position: 'relative' },
   // Radar
-  radarContainer: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center' },
-  radarDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#2D5016', borderWidth: 3, borderColor: WHITE },
+  radarContainer: { width: 80, height: 80, alignItems: 'center', justifyContent: 'center' },
+  radarDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#2D5016', borderWidth: 3, borderColor: WHITE, position: 'absolute' },
   // Pins
   pinBubble: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: GREY_BG },
   pinBubbleDark: { backgroundColor: DARK },
@@ -272,4 +333,16 @@ const styles = StyleSheet.create({
   locationBtnText: { fontSize: 22, color: DARK },
   createEventBtn: { position: 'absolute', bottom: 24, alignSelf: 'center', width: 56, height: 56, borderRadius: 28, backgroundColor: DARK, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 6 },
   createEventBtnText: { fontSize: 28, color: WHITE, fontWeight: '300', lineHeight: 30 },
+  // Bottom sheet
+  sheetOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.3)' },
+  sheetCard: { backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 40, paddingTop: 12 },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D1D6', alignSelf: 'center', marginBottom: 16 },
+  sheetContent: { alignItems: 'center', paddingHorizontal: 24 },
+  sheetAvatar: { width: 64, height: 64, borderRadius: 32, marginBottom: 12 },
+  sheetName: { fontSize: 20, fontWeight: '700', color: DARK, marginBottom: 6 },
+  sheetBadge: { backgroundColor: '#F2F2F7', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12, marginBottom: 8 },
+  sheetBadgeText: { fontSize: 12, fontWeight: '600', color: '#6b6b6b' },
+  sheetSubtext: { fontSize: 13, color: '#8E8E93', marginBottom: 16 },
+  sheetViewBtn: { backgroundColor: DARK, paddingVertical: 14, paddingHorizontal: 48, borderRadius: 24 },
+  sheetViewBtnText: { color: WHITE, fontSize: 15, fontWeight: '600' },
 });

@@ -11,8 +11,10 @@ import {
   Image,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
 
@@ -21,23 +23,6 @@ import { Config } from '@/constants/Config';
 // ---------------------------------------------
 type Visibility = 'Public' | 'Private' | 'Friends Only';
 type Capacity = 'Unlimited' | 'Limited';
-
-interface CreateEventScreenProps {
-  profileAvatarUri?: string;
-}
-
-interface EventFormData {
-  coverPhotoUri: string | null;
-  eventName: string;
-  startDate: Date;
-  endDate: Date;
-  location: string;
-  description: string;
-  requireApproval: boolean;
-  price: string;
-  visibility: Visibility;
-  capacity: Capacity;
-}
 
 type ActivePicker = 'none' | 'start-date' | 'start-time' | 'end-date' | 'end-time';
 
@@ -63,9 +48,7 @@ const addOneHour = (date: Date) => new Date(date.getTime() + 60 * 60 * 1000);
 // ---------------------------------------------
 // Component
 // ---------------------------------------------
-const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
-  profileAvatarUri,
-}) => {
+export default function CreateEventScreen() {
   const router = useRouter();
   const [coverPhotoUri, setCoverPhotoUri] = useState<string | null>(null);
   const [eventName, setEventName] = useState('');
@@ -77,10 +60,50 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   const [price, setPrice] = useState('Free');
   const [visibility, setVisibility] = useState<Visibility>('Public');
   const [capacity, setCapacity] = useState<Capacity>('Unlimited');
+  const [hostInstagram, setHostInstagram] = useState('');
+  const [hostEmail, setHostEmail] = useState('');
 
   const [activePicker, setActivePicker] = useState<ActivePicker>('none');
 
-  const isFormValid = eventName.trim().length > 0;
+  const isFormValid = eventName.trim().length > 0 && location.trim().length > 0;
+
+  const handleDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (!selectedDate) {
+      if (Platform.OS === 'android') setActivePicker('none');
+      return;
+    }
+    switch (activePicker) {
+      case 'start-date': {
+        const updated = new Date(startDate);
+        updated.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        setStartDate(updated);
+        // Also move end date if it's before start
+        if (endDate < updated) setEndDate(addOneHour(updated));
+        break;
+      }
+      case 'start-time': {
+        const updated = new Date(startDate);
+        updated.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+        setStartDate(updated);
+        if (endDate < updated) setEndDate(addOneHour(updated));
+        break;
+      }
+      case 'end-date': {
+        const updated = new Date(endDate);
+        updated.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        setEndDate(updated);
+        break;
+      }
+      case 'end-time': {
+        const updated = new Date(endDate);
+        updated.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+        setEndDate(updated);
+        break;
+      }
+    }
+    // On Android, close picker after selection
+    if (Platform.OS === 'android') setActivePicker('none');
+  };
 
   const handlePickCoverPhoto = async () => {
     Alert.alert('Upload Cover Photo', 'Allow Pawven to access your photo gallery?', [
@@ -110,6 +133,10 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   const handleSubmit = async () => {
     if (!isFormValid) return;
     try {
+      // Default to KL center if no specific coordinates chosen
+      const defaultLat = 3.139;
+      const defaultLng = 101.6869;
+
       await fetch(`${Config.API_BASE_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,7 +146,13 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           startTime: startDate.toISOString(),
           endTime: endDate.toISOString(),
           address: location,
+          lat: defaultLat,
+          lng: defaultLng,
           category: 'meetup',
+          requireApproval,
+          visibility,
+          hostInstagram: hostInstagram.trim() || undefined,
+          hostEmail: hostEmail.trim() || undefined,
         }),
       });
       Alert.alert('Success', 'Event created!', [{ text: 'OK', onPress: () => router.back() }]);
@@ -217,9 +250,15 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
               <View style={styles.dateRowLine}>
                 <Text style={styles.dateRowLabel}>End</Text>
-                <TouchableOpacity onPress={() => setActivePicker('end-time')}>
-                  <Text style={styles.dateRowValue}>{formatTime(endDate)}</Text>
-                </TouchableOpacity>
+                <View style={styles.dateRowValueGroup}>
+                  <TouchableOpacity onPress={() => setActivePicker('end-date')}>
+                    <Text style={styles.dateRowValue}>{formatDate(endDate)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.dateRowValue}> at </Text>
+                  <TouchableOpacity onPress={() => setActivePicker('end-time')}>
+                    <Text style={styles.dateRowValue}>{formatTime(endDate)}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -255,6 +294,34 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         </View>
 
         {/* Ticketing */}
+        <Text style={styles.sectionLabel}>Host Contact (optional)</Text>
+        <View style={styles.fieldGroup}>
+          <View style={styles.iconInputRow}>
+            <Text style={styles.iconInputIcon}>📷</Text>
+            <TextInput
+              style={styles.iconInputField}
+              placeholder="Instagram handle"
+              placeholderTextColor="rgba(255,255,255,0.45)"
+              value={hostInstagram}
+              onChangeText={setHostInstagram}
+              autoCapitalize="none"
+            />
+          </View>
+          <View style={styles.settingsRowDivider} />
+          <View style={styles.iconInputRow}>
+            <Text style={styles.iconInputIcon}>✉️</Text>
+            <TextInput
+              style={styles.iconInputField}
+              placeholder="Contact email"
+              placeholderTextColor="rgba(255,255,255,0.45)"
+              value={hostEmail}
+              onChangeText={setHostEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+        </View>
+
         <Text style={styles.sectionLabel}>Ticketing</Text>
         <View style={styles.fieldGroup}>
           <View style={styles.settingsRow}>
@@ -271,7 +338,7 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
           <View style={styles.settingsRowDivider} />
 
-          <TouchableOpacity style={styles.settingsRow}>
+          <TouchableOpacity style={styles.settingsRow} onPress={() => setPrice(price === 'Free' ? 'Paid' : 'Free')}>
             <Text style={styles.settingsIcon}>$</Text>
             <Text style={styles.settingsLabel}>Price</Text>
             <View style={styles.settingsValueGroup}>
@@ -315,9 +382,39 @@ const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* DateTimePicker - iOS: Modal, Android: inline */}
+      {activePicker !== 'none' && Platform.OS === 'ios' && (
+        <Modal transparent animationType="slide">
+          <View style={styles.pickerModalOverlay}>
+            <View style={styles.pickerModalCard}>
+              <View style={styles.pickerModalHeader}>
+                <TouchableOpacity onPress={() => setActivePicker('none')}>
+                  <Text style={styles.pickerModalDone}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={activePicker.startsWith('start') ? startDate : endDate}
+                mode={activePicker.endsWith('date') ? 'date' : 'time'}
+                display="spinner"
+                onChange={handleDateChange}
+                themeVariant="dark"
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {activePicker !== 'none' && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={activePicker.startsWith('start') ? startDate : endDate}
+          mode={activePicker.endsWith('date') ? 'date' : 'time'}
+          onChange={handleDateChange}
+        />
+      )}
     </SafeAreaView>
   );
-};
+}
 
 // ---------------------------------------------
 // Colors
@@ -643,5 +740,3 @@ const styles = StyleSheet.create({
     color: '#0a84ff',
   },
 });
-
-export default CreateEventScreen;

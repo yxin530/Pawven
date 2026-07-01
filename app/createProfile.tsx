@@ -45,6 +45,9 @@ export default function CreateProfileScreen() {
 
   const handleSaveProfile = async () => {
     if (!isFormValid) return;
+    // Store profile data globally so profile screens can use it
+    (global as any).__pawven_name = name.trim();
+    (global as any).__pawven_bio = bio.trim();
     // Save to backend (fire and forget)
     try {
       await fetch(`${Config.API_BASE_URL}/users`, {

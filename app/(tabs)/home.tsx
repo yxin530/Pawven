@@ -179,7 +179,7 @@ const CommunityCard = ({ item }: { item: any }) => (
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const router = useRouter();
-  const user = { name: 'Sarah Chen' };
+  const user = { name: (global as any).__pawven_name || 'there' };
 
   // Fetch real events from backend
   const [activities, setActivities] = useState(UPCOMING_ACTIVITIES);
@@ -282,7 +282,7 @@ export default function HomeScreen() {
             }
           }}>
             <Image
-              source={{ uri: 'https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=72' }}
+              source={{ uri: (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=72' }}
               style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: GREY_BG }}
             />
           </TouchableOpacity>
@@ -315,7 +315,7 @@ export default function HomeScreen() {
         {/* ── Map card ── */}
         <TouchableOpacity
           style={styles.mapCard}
-          onPress={() => router.push('/(tabs)/discover')}
+          onPress={() => router.push('/discoverMapScreen')}
           activeOpacity={0.88}
         >
           <View style={styles.mapPlaceholder}>
@@ -340,9 +340,9 @@ export default function HomeScreen() {
 
         {activities.map(item =>
           item.type === 'featured' ? (
-            <FeaturedActivityCard key={item.id} item={item} onPress={() => {}} />
+            <FeaturedActivityCard key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.date || '', location: item.location } })} />
           ) : (
-            <ListActivityCard key={item.id} item={item} onPress={() => {}} />
+            <ListActivityCard key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, location: item.location } })} />
           )
         )}
 

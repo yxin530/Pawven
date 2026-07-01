@@ -18,9 +18,9 @@ const FEEDERS: Feeder[] = [
 
 export default function FeederManagementScreen() {
   const router = useRouter();
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['feeder-1']));
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [visibleCount, setVisibleCount] = useState(2);
-  const [feeders, setFeeders] = useState<Feeder[]>(FEEDERS);
+  const [feeders, setFeeders] = useState<Feeder[]>([]);
 
   useEffect(() => {
     const fetchFeeders = async () => {
@@ -32,7 +32,7 @@ export default function FeederManagementScreen() {
           const mapped: Feeder[] = data.map((f: any, idx: number) => ({
             id: f.id || `feeder-${idx + 1}`,
             name: f.name || `Feeder #${idx + 1}`,
-            location: f.location || 'Unknown',
+            location: f.address || 'Unknown',
             type: f.type || 'Normal',
             typeIcon: f.type?.includes('solar') ? '☀️' : '🔋',
             status: f.status === 'online' ? 'Online' : 'Offline',
@@ -44,8 +44,8 @@ export default function FeederManagementScreen() {
           }));
           setFeeders(mapped);
         }
-      } catch (e) {
-        console.log('Using mock feeder data:', e);
+      } catch {
+        // No feeders for this user — show empty state
       }
     };
     fetchFeeders();

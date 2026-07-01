@@ -12,13 +12,20 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Config } from '@/constants/Config';
 
-// Get TNR completed count from mock data (in production this comes from the store/backend)
-const MOCK_TNR_COMPLETED = 1; // Only 1 cat neutered (matches TNR progress screen)
-
+// Get TNR completed count from backend (0 for new users)
 export default function ProfileScreen() {
   const router = useRouter();
-  const [badgesCount, setBadgesCount] = useState(12);
-  const [catsNeutered, setCatsNeutered] = useState(MOCK_TNR_COMPLETED);
+  const [badgesCount, setBadgesCount] = useState(0);
+  const [catsNeutered, setCatsNeutered] = useState(0);
+  const [catsFed, setCatsFed] = useState(0);
+  const [eventsJoined, setEventsJoined] = useState(0);
+  const [eventsHosted, setEventsHosted] = useState(0);
+
+  // Get profile data from global (set during createProfile)
+  const userName = (global as any).__pawven_name || '';
+  const userBio = (global as any).__pawven_bio || '';
+  const userAvatar = (global as any).__pawven_avatar || '';
+  const isNewUser = !userName;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,19 +37,18 @@ export default function ProfileScreen() {
         if (badgesRes.ok) {
           const badges = await badgesRes.json();
           if (Array.isArray(badges)) {
-            setBadgesCount(badges.length || 12);
+            setBadgesCount(badges.length);
           }
         }
         if (reportsRes.ok) {
           const reports = await reportsRes.json();
           if (Array.isArray(reports)) {
             const completedCount = reports.filter((r: any) => r.status === 'completed').length;
-            if (completedCount > 0) setCatsNeutered(completedCount);
+            setCatsNeutered(completedCount);
           }
         }
       } catch (e) {
-        // Keep static values as fallback
-        console.log('Using fallback profile data:', e);
+        // Keep 0 values for new users
       }
     };
     fetchData();
@@ -109,7 +115,7 @@ export default function ProfileScreen() {
       <View style={styles.avatarWrapper}>
         <View style={styles.avatarCircle}>
           <Image
-            source={{ uri: (global as any).__pawven_avatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=sarah&size=160' }}
+            source={{ uri: userAvatar || 'https://api.dicebear.com/9.x/avataaars/png?seed=default&size=160' }}
             style={styles.avatarImage}
           />
         </View>
@@ -121,8 +127,8 @@ export default function ProfileScreen() {
       {/* Name / Edit Profile */}
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.name}>Sarah Lim</Text>
-          <Text style={styles.subtitle}>@sarahlim · Member since Jan 2026</Text>
+          <Text style={styles.name}>{userName || 'New User'}</Text>
+          <Text style={styles.subtitle}>Member since {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
         </View>
         <TouchableOpacity style={styles.editProfileButton}>
           <Text style={styles.editProfileText}>✏️ Edit Profile</Text>
@@ -138,7 +144,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
         <Text style={styles.bioText}>
-          Cat lover & TNR volunteer 🐾 Helping strays one meal at a time. Based in KL, Malaysia.
+          {userBio || 'No bio yet. Tap Edit to add one!'}
         </Text>
       </View>
 
@@ -162,7 +168,7 @@ export default function ProfileScreen() {
       <View style={styles.gridRow}>
         <View style={styles.milestoneCard}>
           <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>🍲</Text></View>
-          <Text style={styles.milestoneNumber}>68</Text>
+          <Text style={styles.milestoneNumber}>{catsFed}</Text>
           <Text style={styles.milestoneLabel}>Cats Fed</Text>
         </View>
         <View style={styles.milestoneCard}>
@@ -175,12 +181,12 @@ export default function ProfileScreen() {
       <View style={styles.gridRow}>
         <View style={styles.milestoneCard}>
           <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>📅</Text></View>
-          <Text style={styles.milestoneNumber}>5</Text>
+          <Text style={styles.milestoneNumber}>{eventsJoined}</Text>
           <Text style={styles.milestoneLabel}>Events Joined</Text>
         </View>
         <View style={styles.milestoneCard}>
           <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>🚩</Text></View>
-          <Text style={styles.milestoneNumber}>1</Text>
+          <Text style={styles.milestoneNumber}>{eventsHosted}</Text>
           <Text style={styles.milestoneLabel}>Events Hosted</Text>
         </View>
       </View>
@@ -193,26 +199,34 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View style={styles.badgesGrid}>
-        {[
-          { icon: '🍲', label: 'First Feed' },
-          { icon: '⭐', label: '10 Feedings' },
-          { icon: '🏆', label: '50 Feedings' },
-          { icon: '💉', label: 'First TNR' },
-          { icon: '🚩', label: 'Host Event' },
-          { icon: '🛡️', label: '5 Cats Helped' },
-        ].map((badge, idx) => (
-          <View key={idx} style={styles.badgeItem}>
-            <View style={styles.badgeIconBox}>
-              <Text style={{ fontSize: 22 }}>{badge.icon}</Text>
+      {badgesCount > 0 ? (
+        <View style={styles.badgesGrid}>
+          {[
+            { icon: '🍲', label: 'First Feed' },
+            { icon: '⭐', label: '10 Feedings' },
+            { icon: '🏆', label: '50 Feedings' },
+            { icon: '💉', label: 'First TNR' },
+            { icon: '🚩', label: 'Host Event' },
+            { icon: '🛡️', label: '5 Cats Helped' },
+          ].map((badge, idx) => (
+            <View key={idx} style={styles.badgeItem}>
+              <View style={styles.badgeIconBox}>
+                <Text style={{ fontSize: 22 }}>{badge.icon}</Text>
+              </View>
+              <Text style={styles.badgeLabel}>{badge.label}</Text>
             </View>
-            <Text style={styles.badgeLabel}>{badge.label}</Text>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      ) : (
+        <View style={{ paddingVertical: 30, alignItems: 'center', borderWidth: 1, borderColor: '#eee', borderRadius: 12, marginHorizontal: 16 }}>
+          <Text style={{ fontSize: 32, marginBottom: 8 }}>🏅</Text>
+          <Text style={{ fontSize: 14, color: '#999' }}>No badges earned yet</Text>
+          <Text style={{ fontSize: 12, color: '#bbb', marginTop: 4 }}>Start feeding, reporting, or joining events!</Text>
+        </View>
+      )}
 
       <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/badgesScreen')}>
-        <Text style={styles.viewAllText}>🐾  View All {badgesCount} Badges</Text>
+        <Text style={styles.viewAllText}>🐾  {badgesCount > 0 ? `View All ${badgesCount} Badges` : 'No badges yet — start exploring!'}</Text>
       </TouchableOpacity>
 
       <View style={{ height: 100 }} />

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.5.0",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@rnmapbox/maps": "10.1.30",
     "@stripe/stripe-react-native": "^0.38.6",
     "expo": "~52.0.0",

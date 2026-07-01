@@ -177,7 +177,7 @@ function CaseCard({ item }: { item: TNRCase }) {
 
 function TNRWithCases({ onReport }: { onReport: () => void }) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
-  const [cases, setCases] = useState<TNRCase[]>(MOCK_CASES);
+  const [cases, setCases] = useState<TNRCase[]>([]);
   const filters: FilterTab[] = ['All', 'Pending', 'In Progress', 'Completed'];
 
   useEffect(() => {
@@ -198,9 +198,8 @@ function TNRWithCases({ onReport }: { onReport: () => void }) {
           }));
           setCases(mapped);
         }
-      } catch (e) {
-        // Keep mock data as fallback
-        console.log('Using mock TNR cases:', e);
+      } catch {
+        // No fallback — new users should see empty state
       }
     };
     fetchCases();

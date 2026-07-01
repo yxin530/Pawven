@@ -20,14 +20,14 @@ type Badge = {
 };
 
 const BADGES: Badge[] = [
-  { id: 'first-feeding', label: 'First Feeding', xp: 20, icon: '🍲', category: 'Feeding', earned: true },
-  { id: '7-day-streak', label: '7 Day Streak', xp: 50, icon: '🔥', category: 'Feeding', earned: true },
-  { id: 'first-neuter', label: 'First Neuter', xp: 30, icon: '✂️', category: 'Neutering', earned: true },
-  { id: 'community-joiner', label: 'Community Joiner', xp: 20, icon: '👥', category: 'Community', earned: true },
-  { id: 'super-feeder', label: 'Super Feeder', xp: 60, icon: '⭐', category: 'Feeding', earned: true },
-  { id: 'vax-helper', label: 'Vax Helper', xp: 40, icon: '💉', category: 'Neutering', earned: true, highlighted: true },
-  { id: 'event-host', label: 'Event Host', xp: 50, icon: '🚩', category: 'Community', earned: true },
-  { id: 'gold-league', label: 'Gold League', xp: 80, icon: '🏆', category: 'Community', earned: true },
+  { id: 'first-feeding', label: 'First Feeding', xp: 20, icon: '🍲', category: 'Feeding', earned: false },
+  { id: '7-day-streak', label: '7 Day Streak', xp: 50, icon: '🔥', category: 'Feeding', earned: false },
+  { id: 'first-neuter', label: 'First Neuter', xp: 30, icon: '✂️', category: 'Neutering', earned: false },
+  { id: 'community-joiner', label: 'Community Joiner', xp: 20, icon: '👥', category: 'Community', earned: false },
+  { id: 'super-feeder', label: 'Super Feeder', xp: 60, icon: '⭐', category: 'Feeding', earned: false },
+  { id: 'vax-helper', label: 'Vax Helper', xp: 40, icon: '💉', category: 'Neutering', earned: false },
+  { id: 'event-host', label: 'Event Host', xp: 50, icon: '🚩', category: 'Community', earned: false },
+  { id: 'gold-league', label: 'Gold League', xp: 80, icon: '🏆', category: 'Community', earned: false },
   { id: 'colony-guardian', label: 'Colony Guardian', icon: '🛡️', category: 'Community', earned: false },
   { id: '50-cats-fed', label: '50 Cats Fed', icon: '🔒', category: 'Feeding', earned: false },
   { id: '30-day-streak', label: '30 Day Streak', icon: '🔒', category: 'Feeding', earned: false },
@@ -42,6 +42,11 @@ export default function BadgesScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<Filter>('All');
   const [badges, setBadges] = useState<Badge[]>(BADGES);
+  const [level, setLevel] = useState(1);
+  const [totalXp, setTotalXp] = useState(0);
+  const [xpToNext, setXpToNext] = useState(0);
+  const [xpNeeded, setXpNeeded] = useState(100);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const fetchBadges = async () => {
@@ -50,19 +55,22 @@ export default function BadgesScreen() {
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const mapped: Badge[] = data.map((b: any) => ({
-            id: b.id,
-            label: b.name || b.label || 'Badge',
-            xp: b.xp || 20,
-            icon: b.icon || '⭐',
-            category: b.category || 'Community',
-            earned: true,
-          }));
-          setBadges(mapped);
+          const earnedIds = data.map((b: any) => b.badge_id || b.id);
+          // Mark badges as earned if they exist in backend
+          setBadges(prev => prev.map(b => ({
+            ...b,
+            earned: earnedIds.includes(b.id),
+          })));
+          // Calculate XP from earned badges
+          const earnedXp = BADGES.filter(b => earnedIds.includes(b.id)).reduce((sum, b) => sum + (b.xp || 0), 0);
+          setTotalXp(earnedXp);
+          const calcLevel = Math.floor(earnedXp / 100) + 1;
+          setLevel(calcLevel);
+          setXpToNext(earnedXp % 100);
+          setXpNeeded(100);
         }
-      } catch (e) {
-        // Keep mock badges as fallback
-        console.log('Using mock badges:', e);
+      } catch {
+        // Keep default (new user) state — Level 1, 0 XP, all locked
       }
     };
     fetchBadges();
@@ -93,20 +101,20 @@ export default function BadgesScreen() {
         <View style={styles.levelCard}>
           <View style={styles.levelCardLeft}>
             <Text style={styles.levelLabel}>Your Level</Text>
-            <Text style={styles.levelValue}>Level 6</Text>
-            <Text style={styles.levelLeague}>Gold League</Text>
+            <Text style={styles.levelValue}>Level {level}</Text>
+            <Text style={styles.levelLeague}>{level >= 6 ? 'Gold League' : level >= 3 ? 'Silver League' : 'Bronze League'}</Text>
           </View>
           <View style={styles.xpCircle}>
-            <Text style={styles.xpValue}>480</Text>
+            <Text style={styles.xpValue}>{totalXp}</Text>
             <Text style={styles.xpUnit}>XP</Text>
           </View>
 
           <View style={styles.progressBarTrack}>
-            <View style={styles.progressBarFill} />
+            <View style={[styles.progressBarFill, { width: `${xpNeeded > 0 ? (xpToNext / xpNeeded) * 100 : 0}%` }]} />
           </View>
           <View style={styles.progressRow}>
-            <Text style={styles.progressText}>68 / 100 XP to Level 7</Text>
-            <Text style={styles.streakText}>⚡ 12 day streak</Text>
+            <Text style={styles.progressText}>{xpToNext} / {xpNeeded} XP to Level {level + 1}</Text>
+            <Text style={styles.streakText}>{streak > 0 ? `⚡ ${streak} day streak` : '⚡ Start a streak!'}</Text>
           </View>
         </View>
 
@@ -184,7 +192,7 @@ const styles = StyleSheet.create({
   xpValue: { fontSize: 16, fontWeight: '700', color: '#fff' },
   xpUnit: { fontSize: 10, color: '#aaa' },
   progressBarTrack: { height: 6, borderRadius: 3, backgroundColor: '#3a3a3a', marginTop: 14, overflow: 'hidden' },
-  progressBarFill: { width: '68%', height: '100%', backgroundColor: '#fff', borderRadius: 3 },
+  progressBarFill: { height: '100%', backgroundColor: '#fff', borderRadius: 3 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   progressText: { fontSize: 11, color: '#aaa' },
   streakText: { fontSize: 11, color: '#aaa' },

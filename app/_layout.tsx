@@ -14,6 +14,9 @@ export default function RootLayout() {
       <Stack.Screen name="badgesScreen" />
       <Stack.Screen name="feederManagement" />
       <Stack.Screen name="createEvent" />
+      <Stack.Screen name="eventDetail" />
+      <Stack.Screen name="eventAttendees" />
+      <Stack.Screen name="orgProfile" />
       <Stack.Screen name="ngo" />
       <Stack.Screen
         name="profile"

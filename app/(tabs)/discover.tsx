@@ -71,8 +71,8 @@ const FeederRow = ({ item }: { item: any }) => {
   );
 };
 
-const CommunityPhotoPost = ({ item }: { item: any }) => (
-  <View style={styles.communityPhotoCard}>
+const CommunityPhotoPost = ({ item, onPress }: { item: any; onPress?: () => void }) => (
+  <TouchableOpacity style={styles.communityPhotoCard} onPress={onPress} activeOpacity={0.88}>
     <View style={styles.communityPhotoBanner}><Text style={styles.communityPhotoLabel}>Community Event Photo</Text></View>
     <View style={styles.communityPhotoBody}>
       <Text style={styles.communityTime}>{item.time}</Text>
@@ -85,7 +85,7 @@ const CommunityPhotoPost = ({ item }: { item: any }) => (
         <Text style={styles.likeText}>🤍 {item.likes}</Text>
       </View>
     </View>
-  </View>
+  </TouchableOpacity>
 );
 
 const CommunityTextPost = ({ item }: { item: any }) => (
@@ -101,29 +101,33 @@ const CommunityTextPost = ({ item }: { item: any }) => (
 
 const NgoCard = ({ item }: { item: any }) => {
   const [following, setFollowing] = useState(item.following);
+  const router = useRouter();
   return (
-    <View style={styles.ngoCard}>
+    <TouchableOpacity style={styles.ngoCard} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'ngo', volunteers: item.volunteers || '0' } })} activeOpacity={0.85}>
       <View style={styles.ngoIcon}><Text style={{ fontSize: 22 }}>{item.icon}</Text></View>
       <Text style={styles.ngoName}>{item.name}</Text>
       <Text style={styles.ngoVolunteers}>{item.volunteers}</Text>
       <TouchableOpacity style={following ? styles.btnSolid : styles.btnOutlineNgo} onPress={() => setFollowing(!following)}>
         <Text style={following ? styles.btnSolidText : styles.btnOutlineNgoText}>{following ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
-const VetRow = ({ item }: { item: any }) => (
-  <View style={styles.vetRow}>
-    <View style={styles.vetAvatar}><Text style={{ fontSize: 20 }}>🩺</Text></View>
-    <View style={styles.vetInfo}>
-      <Text style={styles.vetName}>{item.name}</Text>
-      <Text style={styles.vetClinic}>{item.clinic}</Text>
-      <Text style={styles.vetRating}>⭐ {item.rating} · {item.specialty}</Text>
-    </View>
-    <TouchableOpacity style={styles.btnOutline}><Text style={styles.btnOutlineText}>Book</Text></TouchableOpacity>
-  </View>
-);
+const VetRow = ({ item }: { item: any }) => {
+  const router = useRouter();
+  return (
+    <TouchableOpacity style={styles.vetRow} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'vet', volunteers: item.rating ? `⭐ ${item.rating}` : '0' } })} activeOpacity={0.85}>
+      <View style={styles.vetAvatar}><Text style={{ fontSize: 20 }}>🩺</Text></View>
+      <View style={styles.vetInfo}>
+        <Text style={styles.vetName}>{item.name}</Text>
+        <Text style={styles.vetClinic}>{item.clinic}</Text>
+        <Text style={styles.vetRating}>⭐ {item.rating} · {item.specialty}</Text>
+      </View>
+      <TouchableOpacity style={styles.btnOutline}><Text style={styles.btnOutlineText}>Book</Text></TouchableOpacity>
+    </TouchableOpacity>
+  );
+};
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 const FILTERS: FilterKey[] = ['All', 'Feeder', 'Communities Activity', 'NGOs'];
@@ -134,14 +138,15 @@ export default function DiscoverScreen() {
   const [feeders, setFeeders] = useState(FEEDERS);
   const [orgs, setOrgs] = useState(NGOS);
   const [vets, setVets] = useState(VETS);
+  const [communityPosts, setCommunityPosts] = useState(COMMUNITY_POSTS);
 
   useEffect(() => {
-    // Fetch feeders from backend
+    // Fetch feeders from backend (only online ones show)
     fetch(`${Config.API_BASE_URL}/feeders`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setFeeders(data.map((f: any) => ({
+          setFeeders(data.filter((f: any) => f.status === 'online').map((f: any) => ({
             id: f.id,
             name: f.name,
             area: f.address || 'Unknown',
@@ -166,6 +171,24 @@ export default function DiscoverScreen() {
           }));
           if (ngoList.length) setOrgs(ngoList);
           if (vetList.length) setVets(vetList);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch events and show as community activity
+    fetch(`${Config.API_BASE_URL}/events`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const eventPosts = data.map((e: any) => ({
+            id: e.id,
+            type: 'photo' as const,
+            time: e.start_time ? new Date(e.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Upcoming',
+            title: e.title,
+            participants: e.rsvp_count || 0,
+            likes: 0,
+          }));
+          setCommunityPosts([...eventPosts, ...COMMUNITY_POSTS]);
         }
       })
       .catch(() => {});
@@ -206,7 +229,7 @@ export default function DiscoverScreen() {
         {(activeFilter === 'All' || activeFilter === 'Feeder') && (<><SectionHeader title="Feeders" /><View style={styles.card}>{feeders.map((item: any, idx: number) => (<View key={item.id}><FeederRow item={item} />{idx < feeders.length - 1 && <View style={styles.divider} />}</View>))}</View></>)}
 
         {/* Communities */}
-        {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" /><CommunityPhotoPost item={COMMUNITY_POSTS[0]} /><CommunityTextPost item={COMMUNITY_POSTS[1]} /></>)}
+        {(activeFilter === 'All' || activeFilter === 'Communities Activity') && (<><SectionHeader title="Communities Activity" />{communityPosts.filter(p => p.type === 'photo').slice(0, 3).map((item: any) => <CommunityPhotoPost key={item.id} item={item} onPress={() => router.push({ pathname: '/eventDetail', params: { id: item.id, title: item.title, date: item.time } })} />)}{communityPosts.filter(p => p.type === 'text').slice(0, 2).map((item: any) => <CommunityTextPost key={item.id} item={item} />)}</>)}
 
         {/* NGOs */}
         {(activeFilter === 'All' || activeFilter === 'NGOs') && (<><SectionHeader title="NGOs" /><View style={styles.ngoRow}>{orgs.map((item: any) => <NgoCard key={item.id} item={item} />)}</View></>)}
