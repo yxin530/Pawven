@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Image,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Config } from '@/constants/Config';
@@ -24,6 +25,7 @@ export default function OrgProfileScreen() {
   const [followers, setFollowers] = useState(parseInt(params.followers || '0', 10) || 0);
   const [volunteersLabel, setVolunteersLabel] = useState(params.volunteers || '0');
   const [logoUrl, setLogoUrl] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     if (!orgId) return;
@@ -94,10 +96,29 @@ export default function OrgProfileScreen() {
 
         {/* Follow button */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.followBtn}>
-            <Text style={styles.followBtnText}>Follow</Text>
+          <TouchableOpacity
+            style={[styles.followBtn, isFollowing && { backgroundColor: '#f2f2f2' }]}
+            onPress={() => {
+              if (isFollowing) {
+                setFollowers(prev => prev - 1);
+                setIsFollowing(false);
+              } else {
+                setFollowers(prev => prev + 1);
+                setIsFollowing(true);
+              }
+            }}
+          >
+            <Text style={[styles.followBtnText, isFollowing && { color: '#111' }]}>
+              {isFollowing ? 'Following' : 'Follow'}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.contactBtn}>
+          <TouchableOpacity style={styles.contactBtn} onPress={() => {
+            Alert.alert(`Contact ${orgName}`, 'How would you like to reach them?', [
+              { text: 'WhatsApp', onPress: () => Alert.alert('WhatsApp', 'Contact number coming soon') },
+              { text: 'Email', onPress: () => Alert.alert('Email', 'Email coming soon') },
+              { text: 'Cancel', style: 'cancel' },
+            ]);
+          }}>
             <Text style={styles.contactBtnText}>Contact</Text>
           </TouchableOpacity>
         </View>

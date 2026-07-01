@@ -23,13 +23,23 @@ export default function CommunityProfileScreen() {
   }>();
 
   const communityName = params.name || 'Community';
-  const followersCount = params.followers || '0';
+  const [followersCount, setFollowersCount] = useState(parseInt(params.followers || '0', 10) || 0);
   const postsCount = params.posts || '0';
   const bio = params.bio || 'No description available.';
   const locationArea = params.location || '';
 
   const [isFollowing, setIsFollowing] = useState(false);
   const posts = getPostsByOrg(communityName);
+
+  const handleFollowToggle = () => {
+    if (isFollowing) {
+      setFollowersCount(prev => prev - 1);
+      setIsFollowing(false);
+    } else {
+      setFollowersCount(prev => prev + 1);
+      setIsFollowing(true);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -79,7 +89,7 @@ export default function CommunityProfileScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={isFollowing ? styles.followingBtn : styles.followBtn}
-            onPress={() => setIsFollowing(!isFollowing)}
+            onPress={handleFollowToggle}
           >
             <Text style={isFollowing ? styles.followingBtnText : styles.followBtnText}>
               {isFollowing ? 'Following' : 'Follow'}

@@ -195,18 +195,16 @@ export default function NGOVetProfileScreen() {
           <Text style={styles.bioText}>{bio}</Text>
         </View>
 
-        {/* Contact & Follow Buttons */}
+        {/* Add Contact (own profile) */}
         <View style={styles.contactFollowRow}>
-          <TouchableOpacity style={styles.contactBtn} onPress={handleContact}>
-            <Text style={styles.contactBtnText}>📞 Contact</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.followBtn, isFollowing && styles.followingBtn]}
-            onPress={handleFollowToggle}
-          >
-            <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
-              {isFollowing ? '✓ Following' : '+ Follow'}
-            </Text>
+          <TouchableOpacity style={styles.contactBtn} onPress={() => {
+            Alert.alert('Add Contact Info', 'Set your contact details so others can reach you.', [
+              { text: 'Set WhatsApp', onPress: () => Alert.alert('WhatsApp', 'Feature coming soon — your number will be visible to visitors.') },
+              { text: 'Set Email', onPress: () => Alert.alert('Email', 'Feature coming soon — your email will be visible to visitors.') },
+              { text: 'Cancel', style: 'cancel' },
+            ]);
+          }}>
+            <Text style={styles.contactBtnText}>📞 Add Contact</Text>
           </TouchableOpacity>
         </View>
 
@@ -226,17 +224,29 @@ export default function NGOVetProfileScreen() {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/feederManagement')}>
-            <Text style={styles.primaryBtnText}>⚙️ Manage Feeders</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.push('/(tabs)/applySmartFeeder')}>
-            <Text style={styles.secondaryBtnText}>+ Apply Feeder</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Action Buttons — only show if user owns feeders */}
+        {feedersCount > 0 && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/feederManagement')}>
+              <Text style={styles.primaryBtnText}>⚙️ Manage Feeders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.push('/(tabs)/applySmartFeeder')}>
+              <Text style={styles.secondaryBtnText}>+ Apply Feeder</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-        {/* Feeder Tracking */}
+        {/* Apply for Smart Feeder — show when user has no feeders */}
+        {feedersCount === 0 && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/(tabs)/applySmartFeeder')}>
+              <Text style={styles.primaryBtnText}>🐾 Apply for Smart Feeder</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Feeder Tracking — only show if user owns feeders */}
+        {feedersCount > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📈 Feeder Tracking Record</Text>
           <View style={styles.tableCard}>
@@ -252,6 +262,7 @@ export default function NGOVetProfileScreen() {
             <Text style={styles.viewAllText}>View all records</Text>
           </TouchableOpacity>
         </View>
+        )}
 
         {/* Posts Section */}
         <View style={styles.section}>
