@@ -109,10 +109,27 @@ export default function CreateProfileScreen() {
             <Text style={styles.label}>Certificate / License *</Text>
             <Text style={styles.kycHint}>Upload your NGO registration or veterinary license for verification.</Text>
             <TouchableOpacity style={styles.uploadBox} onPress={async () => {
-              const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-              if (status !== 'granted') { Alert.alert('Permission Required', 'We need gallery access.'); return; }
-              const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
-              if (!result.canceled) Alert.alert('Uploaded', 'Certificate uploaded for review.');
+              Alert.alert('Upload Certificate', 'Choose how to provide your certificate', [
+                {
+                  text: 'Take Photo',
+                  onPress: async () => {
+                    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                    if (status !== 'granted') { Alert.alert('Permission Required', 'We need camera access.'); return; }
+                    const result = await ImagePicker.launchCameraAsync({ quality: 0.9 });
+                    if (!result.canceled) Alert.alert('Uploaded', 'Certificate captured for AI verification.');
+                  },
+                },
+                {
+                  text: 'Choose from Gallery',
+                  onPress: async () => {
+                    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                    if (status !== 'granted') { Alert.alert('Permission Required', 'We need gallery access.'); return; }
+                    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
+                    if (!result.canceled) Alert.alert('Uploaded', 'Certificate uploaded for AI verification.');
+                  },
+                },
+                { text: 'Cancel', style: 'cancel' },
+              ]);
             }}>
               <Text style={styles.uploadBoxIcon}>📄</Text>
               <Text style={styles.uploadBoxText}>Tap to upload certificate</Text>

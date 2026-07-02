@@ -11,36 +11,36 @@ Pawven is a community-driven mobile application for animal welfare enthusiasts, 
 | Framework | Expo 52 + React Native |
 | Language | TypeScript |
 | Navigation | Expo Router (file-based) |
-| Styling | NativeWind / Tailwind CSS |
-| State Management | Zustand + AsyncStorage |
-| Authentication | Clerk |
-| Maps | @rnmapbox/maps (Mapbox) |
+| Styling | NativeWind / Tailwind CSS + StyleSheet |
+| State Management | Zustand + Global state |
+| Authentication | Supabase Auth + Mock auth (dev mode) |
+| Maps | react-native-maps (Apple Maps / Google Maps) |
 | Payments | Stripe (stripe-node + @stripe/stripe-react-native) |
-| Camera/Media | Expo Camera + Expo AV |
-| Backend | Expo API Routes / Express (Node.js) |
-| Database | MongoDB Atlas + Mongoose |
-| Photo Storage | Cloudinary |
-| IoT Protocol | MQTT (mqtt.js) |
-| Workflow Orchestration | Temporal |
-| Security | Aikido Security |
+| Camera/Media | expo-image-picker + expo-camera |
+| Backend | Express (Node.js) |
+| Database | Supabase (PostgreSQL) |
+| Photo Storage | Supabase Storage |
+| IoT Protocol | MQTT (mqtt.js) — hardware pending |
+| AI Verification | AI-powered certificate verification (NGO/Vet KYC) |
+| Security | Aikido Security (repo scanning) + Supabase RLS |
 
 ### Key Design Decisions
 
 1. **Expo Router file-based routing** — Routes defined by filesystem under `app/`, enabling automatic deep linking, type-safe navigation, and clean separation of auth/tab/detail flows via route groups.
 
-2. **Clerk for authentication** — Managed email/password auth with built-in email verification, token rotation, and SecureStore integration for persistent sessions. Supports role-based access (standard, NGO, vet).
+2. **Supabase Auth + Mock mode** — Supabase provides phone OTP and email auth for production. Mock mode (current) skips verification for fast development/testing. Both coexist — a flag can switch between them.
 
-3. **Temporal for workflow orchestration** — Durable execution engine for multi-step business processes (kibble purchase → payment → MQTT dispense → transaction recording, TNR case lifecycle). Handles retries, timeouts, and exactly-once semantics without custom state machines.
+3. **Supabase (PostgreSQL) as database** — Replaces MongoDB. Provides relational schema, UUID primary keys, row-level security, and built-in REST API. All tables defined in `backend/src/db/schema.sql`.
 
-4. **MQTT for IoT communication** — Lightweight pub/sub protocol for feeder dispense commands. Backend publishes to `feeder/dispense/{id}` topic after confirmed payment. Supports hardware fallback via mock MQTT server for development.
+4. **MQTT for IoT communication** — Lightweight pub/sub protocol for feeder dispense commands. Backend publishes to `feeder/dispense/{id}` topic after confirmed payment. Hardware integration pending — currently uses mock data.
 
-5. **@rnmapbox/maps for spatial discovery** — Native Mapbox GL integration with GeoJSON marker clustering, custom marker types (Feeder, Event, NGO, Vet), and bottom sheet interaction on marker tap.
+5. **react-native-maps for spatial discovery** — Native Apple Maps integration in Expo Go with custom markers, radar pulse animation for user location, and bottom sheet interaction on marker tap.
 
 6. **Stripe for payments** — Server-side PaymentIntent creation with client-side confirmation via `@stripe/stripe-react-native`. Supports kibble purchases, donations, and feeder rentals.
 
-7. **MongoDB with GeoJSON** — Document-oriented storage with native `2dsphere` indexing for proximity queries. Each location-aware entity stores coordinates as GeoJSON Point.
+7. **Supabase Storage for photos** — Managed image upload for TNR stray photos, event cover photos, profile pictures, and org logos. Replaces Cloudinary — one less external service.
 
-8. **Cloudinary for photo storage** — Managed image upload/transformation for TNR stray photos, event cover photos, and org logos. Client uploads directly with signed URLs.
+8. **Zustand for client state** — Lightweight state management for auth session, feeder data, TNR drafts, and cart. Stores exist but most screens currently use direct API fetch with global state fallback for simplicity.
 
 ## Architecture
 
