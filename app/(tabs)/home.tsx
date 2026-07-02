@@ -14,6 +14,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
 import { getRandomAvatar } from '@/constants/Avatars';
+import CalendarDateIcon from '@/components/ui/CalendarDateIcon';
+import { toggleFollow, isFollowingOrg } from '@/store/follow-store';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getGreeting() {
@@ -135,10 +137,7 @@ const FeaturedActivityCard = ({ item, onPress }: { item: any; onPress: () => voi
 
 const ListActivityCard = ({ item, onPress }: { item: any; onPress: () => void }) => (
   <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.88}>
-    <View style={styles.dateBadge}>
-      <Text style={styles.dateBadgeMonth}>{item.month}</Text>
-      <Text style={styles.dateBadgeDay}>{item.day}</Text>
-    </View>
+    <CalendarDateIcon month={item.month} day={item.day} size={42} />
     <View style={styles.listCardInfo}>
       <Text style={styles.listCardTitle}>{item.title}</Text>
       <Text style={styles.listCardLocation}>{item.location}</Text>
@@ -160,6 +159,8 @@ const ListActivityCard = ({ item, onPress }: { item: any; onPress: () => void })
 
 const CommunityCard = ({ item }: { item: any }) => {
   const router = useRouter();
+  const avatarIndex = parseInt(item.id?.replace(/\D/g, '') || '0', 10);
+  const [following, setFollowing] = useState(isFollowingOrg(item.id));
   return (
     <TouchableOpacity
       style={styles.communityCard}
@@ -167,16 +168,16 @@ const CommunityCard = ({ item }: { item: any }) => {
       activeOpacity={0.85}
     >
       <View style={styles.communityIcon}>
-        <Text style={{ fontSize: 22 }}>{item.icon}</Text>
+        <Image source={getRandomAvatar(avatarIndex)} style={{ width: 48, height: 48, borderRadius: 24 }} />
       </View>
       <Text style={styles.communityName}>{item.name}</Text>
       <Text style={styles.communityMembers}>{item.members}</Text>
-      {item.following ? (
-        <TouchableOpacity style={styles.btnFollowing} activeOpacity={0.8}>
+      {following ? (
+        <TouchableOpacity style={styles.btnFollowing} activeOpacity={0.8} onPress={() => setFollowing(toggleFollow(item.id))}>
           <Text style={styles.btnFollowingText}>Following</Text>
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity style={styles.btnFollow} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.btnFollow} activeOpacity={0.85} onPress={() => setFollowing(toggleFollow(item.id))}>
           <Text style={styles.btnFollowText}>Follow</Text>
         </TouchableOpacity>
       )}

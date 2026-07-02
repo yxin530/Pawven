@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Config } from '@/constants/Config';
 import { getPostsByOrg } from '@/data/posts';
 import { getAvatarForType } from '@/constants/Avatars';
+import { isFollowingOrg, toggleFollow } from '@/store/follow-store';
 
 export default function OrgProfileScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function OrgProfileScreen() {
   const [followers, setFollowers] = useState(parseInt(params.followers || '0', 10) || 0);
   const [volunteersLabel, setVolunteersLabel] = useState(params.volunteers || '0');
   const [logoUrl, setLogoUrl] = useState('');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(isFollowingOrg(orgId));
 
   useEffect(() => {
     if (!orgId) return;
@@ -64,7 +65,7 @@ export default function OrgProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <Image
-            source={logoUrl ? { uri: logoUrl } : getAvatarForType(orgType)}
+            source={logoUrl ? { uri: logoUrl } : getAvatarForType(orgType, parseInt(orgId.replace(/\D/g, '') || '0', 10))}
             style={styles.avatar}
           />
         </View>
@@ -100,13 +101,9 @@ export default function OrgProfileScreen() {
           <TouchableOpacity
             style={[styles.followBtn, isFollowing && { backgroundColor: '#f2f2f2' }]}
             onPress={() => {
-              if (isFollowing) {
-                setFollowers(prev => prev - 1);
-                setIsFollowing(false);
-              } else {
-                setFollowers(prev => prev + 1);
-                setIsFollowing(true);
-              }
+              const newState = toggleFollow(orgId);
+              setIsFollowing(newState);
+              setFollowers(prev => newState ? prev + 1 : prev - 1);
             }}
           >
             <Text style={[styles.followBtnText, isFollowing && { color: '#111' }]}>

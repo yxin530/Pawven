@@ -9,10 +9,11 @@ import {
   Dimensions,
   Animated,
   PanResponder,
-  ImageSourcePropType,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { getRandomAvatar } from '@/constants/Avatars';
+import CalendarDateIcon from '@/components/ui/CalendarDateIcon';
 
 /**
  * CommunityMapCard (Sidebar)
@@ -56,6 +57,7 @@ interface FeederItem {
   emoji: string;
   fillLevel: number;
   distanceKm: number;
+  address?: string;
 }
 
 interface PlaceItem {
@@ -81,9 +83,9 @@ const EVENTS: EventItem[] = [
 ];
 
 const FEEDERS: FeederItem[] = [
-  { id: '001_feeder', title: 'Cats Canteen', emoji: '🐾', fillLevel: 82, distanceKm: 0.4 },
-  { id: '002_feeder', title: 'Home for Cats', emoji: '🐾', fillLevel: 21, distanceKm: 1.2 },
-  { id: '003_feeder', title: 'Taman Desa Feeder', emoji: '🐾', fillLevel: 55, distanceKm: 2.1 },
+  { id: '001_feeder', title: 'Cats Canteen', emoji: '🐾', fillLevel: 82, distanceKm: 0.4, address: 'Ampang, Selangor' },
+  { id: '002_feeder', title: 'Home for Cats', emoji: '🐾', fillLevel: 21, distanceKm: 1.2, address: 'Toa Payoh, Singapore' },
+  { id: '003_feeder', title: 'Taman Desa Feeder', emoji: '🐾', fillLevel: 55, distanceKm: 2.1, address: 'Taman Desa, Kuala Lumpur' },
 ];
 
 const NGOS: PlaceItem[] = [
@@ -201,6 +203,9 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
   const [activeTab, setActiveTab] = useState<CategoryKey>('events');
   const [isOpen, setIsOpen] = useState(initialOpen);
 
+  // Use a ref to track open state so PanResponder always has the current value
+  const isOpenRef = useRef(initialOpen);
+
   // Animated translateX — sidebar slides from the left
   const translateX = useRef(new Animated.Value(initialOpen ? 0 : -SIDEBAR_WIDTH)).current;
 
@@ -209,6 +214,7 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
   }, [isOpen]);
 
   const openSidebar = () => {
+    isOpenRef.current = true;
     setIsOpen(true);
     Animated.spring(translateX, {
       toValue: 0,
@@ -219,6 +225,7 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
   };
 
   const closeSidebar = () => {
+    isOpenRef.current = false;
     setIsOpen(false);
     Animated.spring(translateX, {
       toValue: -SIDEBAR_WIDTH,
@@ -228,15 +235,15 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
     }).start();
   };
 
-  // PanResponder for swipe gestures
+  // PanResponder for swipe gestures — uses isOpenRef to avoid stale closure
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only respond to horizontal gestures
-        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
+        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 5;
       },
       onPanResponderMove: (_, gestureState) => {
-        if (isOpen) {
+        if (isOpenRef.current) {
           // When open, allow dragging left to close
           const newX = Math.min(0, Math.max(-SIDEBAR_WIDTH, gestureState.dx));
           translateX.setValue(newX);
@@ -247,15 +254,20 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (isOpen) {
-          // If swiped left enough, close
+        // Tap detection — small movement means it's a tap
+        if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
+          if (!isOpenRef.current) {
+            openSidebar();
+          }
+          return;
+        }
+        if (isOpenRef.current) {
           if (gestureState.dx < -SWIPE_THRESHOLD || gestureState.vx < -0.5) {
             closeSidebar();
           } else {
             openSidebar();
           }
         } else {
-          // If swiped right enough, open
           if (gestureState.dx > SWIPE_THRESHOLD || gestureState.vx > 0.5) {
             openSidebar();
           } else {
@@ -285,7 +297,7 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
   };
 
   const handleSelectFeeder = (item: FeederItem) => {
-    router.push('/feederManagement');
+    router.push({ pathname: '/smartFeeder', params: { id: item.id, name: item.title, address: item.address || '', kibbleLevel: String(item.fillLevel) } });
   };
 
   const handleSelectNgo = (item: PlaceItem) => {
@@ -361,20 +373,20 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
 
       {/* Visible peek tab on the left edge — shows when sidebar is closed */}
       {!isOpen && (
-        <Pressable style={styles.peekTab} onPress={openSidebar} {...panResponder.panHandlers}>
+        <Animated.View style={styles.peekTab} {...panResponder.panHandlers}>
           <Text style={styles.peekTabIcon}>☰</Text>
           <View style={styles.peekTabDots}>
             <View style={styles.peekDot} />
             <View style={styles.peekDot} />
             <View style={styles.peekDot} />
           </View>
-        </Pressable>
+        </Animated.View>
       )}
 
       {/* Sidebar panel */}
       <Animated.View
         style={[styles.sidebar, { transform: [{ translateX }] }]}
-        {...(isOpen ? panResponder.panHandlers : {})}
+        {...panResponder.panHandlers}
       >
         {/* Drag handle */}
         <View style={styles.dragHandle}>
@@ -393,10 +405,17 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
           {activeTab === 'events' && (
             <>
               <SectionHeader title="This week" onPress={() => handleSeeAll('events')} />
-              {groupedEvents['This week'].map((item) => (
+              {groupedEvents['This week'].map((item, idx) => (
                 <Row
                   key={item.id}
-                  icon={<IconTile emoji={item.emoji} badge={<TagBadge label={`${item.month} ${item.day}`} />} />}
+                  icon={
+                    <View style={styles.eventIconWrap}>
+                      <Image source={require('@/assets/images/eventCover1.png')} style={styles.eventCoverThumb} />
+                      <View style={styles.eventCalendarBadge}>
+                        <CalendarDateIcon month={item.month} day={item.day} size={22} />
+                      </View>
+                    </View>
+                  }
                   title={item.title}
                   subtitle={item.location}
                   onPress={() => handleSelectEvent(item)}
@@ -404,10 +423,17 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
               ))}
 
               <SectionHeader title="Coming up" onPress={() => handleSeeAll('events')} />
-              {groupedEvents['Coming up'].map((item) => (
+              {groupedEvents['Coming up'].map((item, idx) => (
                 <Row
                   key={item.id}
-                  icon={<IconTile emoji={item.emoji} badge={<TagBadge label={`${item.month} ${item.day}`} />} />}
+                  icon={
+                    <View style={styles.eventIconWrap}>
+                      <Image source={require('@/assets/images/eventCover2.png')} style={styles.eventCoverThumb} />
+                      <View style={styles.eventCalendarBadge}>
+                        <CalendarDateIcon month={item.month} day={item.day} size={22} />
+                      </View>
+                    </View>
+                  }
                   title={item.title}
                   subtitle={item.location}
                   onPress={() => handleSelectEvent(item)}
@@ -420,20 +446,25 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
           {activeTab === 'feeders' && (
             <>
               <SectionHeader title="Near you" onPress={() => handleSeeAll('feeders')} />
-              {FEEDERS.map((item) => (
-                <Row
-                  key={item.id}
-                  icon={
-                    <IconTile
-                      emoji={item.emoji}
-                      badge={<TagBadge label={`${item.fillLevel}%`} tone={item.fillLevel < 30 ? 'closed' : 'open'} />}
-                    />
-                  }
-                  title={item.title}
-                  subtitle={`${item.distanceKm.toFixed(1)} km away`}
-                  onPress={() => handleSelectFeeder(item)}
-                />
-              ))}
+              {FEEDERS.map((item) => {
+                const avatarIdx = parseInt(item.id?.replace(/\D/g, '') || '0', 10);
+                return (
+                  <Row
+                    key={item.id}
+                    icon={
+                      <View style={styles.iconTile}>
+                        <Image source={getRandomAvatar(avatarIdx)} style={{ width: 46, height: 46, borderRadius: 12 }} />
+                        <View style={styles.iconTileBadge}>
+                          <TagBadge label={`${item.fillLevel}%`} tone={item.fillLevel < 30 ? 'closed' : 'open'} />
+                        </View>
+                      </View>
+                    }
+                    title={item.title}
+                    subtitle={`${item.distanceKm.toFixed(1)} km away`}
+                    onPress={() => handleSelectFeeder(item)}
+                  />
+                );
+              })}
             </>
           )}
 
@@ -441,20 +472,22 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
           {activeTab === 'ngos' && (
             <>
               <SectionHeader title="Near you" onPress={() => handleSeeAll('ngos')} />
-              {NGOS.map((item) => (
-                <Row
-                  key={item.id}
-                  icon={
-                    <IconTile
-                      emoji={item.emoji}
-                      badge={<TagBadge label={item.status} tone={item.status === 'Open now' ? 'open' : 'closed'} />}
-                    />
-                  }
-                  title={item.title}
-                  subtitle={`${item.distanceKm.toFixed(1)} km away`}
-                  onPress={() => handleSelectNgo(item)}
-                />
-              ))}
+              {NGOS.map((item) => {
+                const avatarIdx = parseInt(item.id?.replace(/\D/g, '') || '0', 10);
+                return (
+                  <Row
+                    key={item.id}
+                    icon={
+                      <View style={styles.iconTile}>
+                        <Image source={getRandomAvatar(avatarIdx)} style={{ width: 46, height: 46, borderRadius: 12 }} />
+                      </View>
+                    }
+                    title={item.title}
+                    subtitle={`${item.distanceKm.toFixed(1)} km away`}
+                    onPress={() => handleSelectNgo(item)}
+                  />
+                );
+              })}
             </>
           )}
 
@@ -466,10 +499,9 @@ const CommunityMapCard: React.FC<CommunityMapCardProps> = ({
                 <Row
                   key={item.id}
                   icon={
-                    <IconTile
-                      emoji={item.emoji}
-                      badge={<TagBadge label={item.status} tone={item.status === 'Open now' ? 'open' : 'closed'} />}
-                    />
+                    <View style={styles.iconTile}>
+                      <Image source={require('@/assets/images/vetProfilepic.png')} style={{ width: 46, height: 46, borderRadius: 12 }} />
+                    </View>
                   }
                   title={item.title}
                   subtitle={`${item.distanceKm.toFixed(1)} km away`}
@@ -682,5 +714,22 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  eventIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    overflow: 'visible',
+    position: 'relative',
+  },
+  eventCoverThumb: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+  },
+  eventCalendarBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
   },
 });

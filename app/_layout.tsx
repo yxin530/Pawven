@@ -23,6 +23,7 @@ export default function RootLayout() {
       <Stack.Screen name="listCommunities" />
       <Stack.Screen name="listFeeders" />
       <Stack.Screen name="listEvents" />
+      <Stack.Screen name="smartFeeder" />
       <Stack.Screen name="notificationEvent_screen" />
       <Stack.Screen name="ngo" />
       <Stack.Screen

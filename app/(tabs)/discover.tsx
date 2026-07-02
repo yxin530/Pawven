@@ -11,6 +11,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
 import { getRandomAvatar } from '@/constants/Avatars';
+import CalendarDateIcon from '@/components/ui/CalendarDateIcon';
+import { toggleFollow, isFollowingOrg } from '@/store/follow-store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type FilterKey = 'All' | 'Feeder' | 'Communities Activity' | 'NGOs';
@@ -18,7 +20,7 @@ type FilterKey = 'All' | 'Feeder' | 'Communities Activity' | 'NGOs';
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const FEEDERS = [
   { id: 'feeder_001', name: 'Cats Canteen', area: 'Ampang, Selangor', colony: 'Kibble 85%', distance: '~nearby', following: false },
-  { id: 'feeder_002', name: 'Home for Cats', area: 'Toa Payoh, Singapore', colony: 'Kibble 62%', distance: '~nearby', following: false },
+  { id: 'feeder_003', name: 'Taman Desa Feeder', area: 'Taman Desa, Kuala Lumpur', colony: 'Kibble 72%', distance: '~nearby', following: false },
 ];
 
 const COMMUNITY_POSTS = [
@@ -54,9 +56,10 @@ const SectionHeader = ({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 );
 
 const FeederRow = ({ item }: { item: any }) => {
-  const [following, setFollowing] = useState(item.following);
+  const [following, setFollowing] = useState(isFollowingOrg(item.id));
+  const router = useRouter();
   return (
-    <View style={styles.feederRow}>
+    <TouchableOpacity style={styles.feederRow} onPress={() => router.push({ pathname: '/smartFeeder', params: { id: item.id, name: item.name } })} activeOpacity={0.85}>
       <View style={styles.feederAvatar}>
         <Image source={getRandomAvatar(parseInt(item.id?.replace(/\D/g, '') || '0', 10))} style={{ width: 48, height: 48, borderRadius: 24 }} />
       </View>
@@ -68,10 +71,10 @@ const FeederRow = ({ item }: { item: any }) => {
           <Text style={[styles.feederMetaText, { marginLeft: 12 }]}>📍 {item.distance}</Text>
         </View>
       </View>
-      <TouchableOpacity style={following ? styles.btnFollowing : styles.btnOutline} onPress={() => setFollowing(!following)}>
+      <TouchableOpacity style={following ? styles.btnFollowing : styles.btnOutline} onPress={() => setFollowing(toggleFollow(item.id))}>
         <Text style={following ? styles.btnFollowingText : styles.btnOutlineText}>{following ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -96,13 +99,16 @@ const CommunityPhotoPost = ({ item, onPress }: { item: any; onPress?: () => void
 
 const CommunityTextPost = ({ item }: { item: any }) => {
   const router = useRouter();
+  const avatarIndex = parseInt(item.id?.replace(/\D/g, '') || '0', 10);
   return (
     <TouchableOpacity
       style={styles.communityTextCard}
       onPress={() => router.push({ pathname: '/communityProfile', params: { id: item.id || '', name: item.name || '', bio: item.desc || '', location: '' } })}
       activeOpacity={0.85}
     >
-      <View style={styles.communityTextIcon}><Text style={{ fontSize: 18 }}>{item.icon}</Text></View>
+      <View style={styles.communityTextIcon}>
+        <Image source={getRandomAvatar(avatarIndex)} style={{ width: 40, height: 40, borderRadius: 20 }} />
+      </View>
       <View style={styles.communityTextBody}>
         <Text style={styles.communityTextName}>{item.name}</Text>
         <Text style={styles.communityTextDesc}>{item.desc}</Text>
@@ -113,14 +119,15 @@ const CommunityTextPost = ({ item }: { item: any }) => {
 };
 
 const NgoCard = ({ item }: { item: any }) => {
-  const [following, setFollowing] = useState(item.following);
+  const [following, setFollowing] = useState(isFollowingOrg(item.id));
   const router = useRouter();
+  const avatarIndex = parseInt(item.id?.replace(/\D/g, '') || '0', 10);
   return (
     <TouchableOpacity style={styles.ngoCard} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'ngo', volunteers: item.volunteers || '0', followers: item.followers || '0' } })} activeOpacity={0.85}>
-      <View style={styles.ngoIcon}><Text style={{ fontSize: 22 }}>{item.icon}</Text></View>
+      <View style={styles.ngoIcon}><Image source={getRandomAvatar(avatarIndex)} style={{ width: 48, height: 48, borderRadius: 24 }} /></View>
       <Text style={styles.ngoName}>{item.name}</Text>
       <Text style={styles.ngoVolunteers}>{item.volunteers}</Text>
-      <TouchableOpacity style={following ? styles.btnSolid : styles.btnOutlineNgo} onPress={() => setFollowing(!following)}>
+      <TouchableOpacity style={following ? styles.btnSolid : styles.btnOutlineNgo} onPress={() => setFollowing(toggleFollow(item.id))}>
         <Text style={following ? styles.btnSolidText : styles.btnOutlineNgoText}>{following ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -131,7 +138,7 @@ const VetRow = ({ item }: { item: any }) => {
   const router = useRouter();
   return (
     <TouchableOpacity style={styles.vetRow} onPress={() => router.push({ pathname: '/orgProfile', params: { id: item.id, name: item.name, type: 'vet', volunteers: item.rating ? `⭐ ${item.rating}` : '0', followers: item.followers || '0' } })} activeOpacity={0.85}>
-      <View style={styles.vetAvatar}><Text style={{ fontSize: 20 }}>🩺</Text></View>
+      <View style={styles.vetAvatar}><Image source={require('@/assets/images/vetProfilepic.png')} style={{ width: 44, height: 44, borderRadius: 22 }} /></View>
       <View style={styles.vetInfo}>
         <Text style={styles.vetName}>{item.name}</Text>
         <Text style={styles.vetClinic}>{item.clinic}</Text>

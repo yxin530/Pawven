@@ -137,6 +137,10 @@ export default function ProfileScreen() {
         ) : (
           <Text style={styles.coverPhotoText}>Cover Photo</Text>
         )}
+        {/* Back button */}
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Text style={styles.backBtnText}>←</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Avatar */}
@@ -189,7 +193,7 @@ export default function ProfileScreen() {
 
       <View style={styles.gridRow}>
         <View style={styles.milestoneCard}>
-          <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>🍲</Text></View>
+          <View style={styles.milestoneIconBox}><Image source={require('@/assets/icons/catsFed.jpg')} style={{ width: 28, height: 28, borderRadius: 6 }} /></View>
           <Text style={styles.milestoneNumber}>{catsFed}</Text>
           <Text style={styles.milestoneLabel}>Cats Fed</Text>
         </View>
@@ -202,12 +206,12 @@ export default function ProfileScreen() {
 
       <View style={styles.gridRow}>
         <View style={styles.milestoneCard}>
-          <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>📅</Text></View>
+          <View style={styles.milestoneIconBox}><Image source={require('@/assets/icons/eventHosted.png')} style={{ width: 28, height: 28 }} resizeMode="contain" /></View>
           <Text style={styles.milestoneNumber}>{eventsJoined}</Text>
           <Text style={styles.milestoneLabel}>Events Joined</Text>
         </View>
         <View style={styles.milestoneCard}>
-          <View style={styles.milestoneIconBox}><Text style={{ fontSize: 18 }}>🚩</Text></View>
+          <View style={styles.milestoneIconBox}><Image source={require('@/assets/icons/eventHosted.png')} style={{ width: 28, height: 28 }} resizeMode="contain" /></View>
           <Text style={styles.milestoneNumber}>{eventsHosted}</Text>
           <Text style={styles.milestoneLabel}>Events Hosted</Text>
         </View>
@@ -294,8 +298,10 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { paddingBottom: 32 },
-  coverPhoto: { height: 110, backgroundColor: '#d9d9d9', alignItems: 'center', justifyContent: 'center' },
+  coverPhoto: { height: 110, backgroundColor: '#d9d9d9', alignItems: 'center', justifyContent: 'center', position: 'relative' },
   coverPhotoText: { color: '#fff', fontSize: 14 },
+  backBtn: { position: 'absolute', top: 50, left: 16, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  backBtnText: { fontSize: 18, color: '#1C1C1E' },
   editCoverButton: { position: 'absolute', right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, gap: 4 },
   editCoverText: { color: '#fff', fontSize: 12 },
   avatarWrapper: { marginTop: -40, marginLeft: 16, width: 80, height: 80 },

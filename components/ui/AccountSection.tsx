@@ -2,16 +2,21 @@ import React from 'react';
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const SettingsRow = ({ icon, label, onPress, isLast }: { icon: string; label: string; onPress?: () => void; isLast?: boolean }) => (
+const SettingsRow = ({ icon, iconImage, label, onPress, isLast }: { icon?: string; iconImage?: any; label: string; onPress?: () => void; isLast?: boolean }) => (
   <>
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.6}>
-      <Text style={styles.rowIcon}>{icon}</Text>
+      {iconImage ? (
+        <Image source={iconImage} style={{ width: 20, height: 20, marginRight: 12 }} resizeMode="contain" />
+      ) : (
+        <Text style={styles.rowIcon}>{icon}</Text>
+      )}
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowChevron}>›</Text>
     </TouchableOpacity>
@@ -56,9 +61,9 @@ export default function AccountSection() {
     <View style={styles.wrapper}>
       <Text style={styles.sectionTitle}>Account</Text>
       <View style={styles.card}>
-        <SettingsRow icon="🔔" label="Notifications" onPress={handleNotifications} />
+        <SettingsRow iconImage={require('@/assets/icons/bellIcon.png')} label="Notifications" onPress={handleNotifications} />
         <SettingsRow icon="🛡️" label="Privacy" onPress={handlePrivacy} />
-        <SettingsRow icon="↪️" label="Log Out" onPress={handleLogOut} isLast />
+        <SettingsRow iconImage={require('@/assets/icons/logout.png')} label="Log Out" onPress={handleLogOut} isLast />
       </View>
 
       <View style={styles.footer}>
