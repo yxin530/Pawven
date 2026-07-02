@@ -1,201 +1,129 @@
-import { Config } from '@/constants/Config';
-import type { ApiResponse } from '@/types';
-
 /**
- * Lazily retrieves the auth store to avoid circular dependency issues.
- * The auth store imports the API client, so we defer the import.
+ * API Client with authentication header injection.
+ * Wraps fetch() to automatically include the Bearer token when available.
  */
-function getAuthStore() {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useAuthStore } = require('@/store/auth-store');
-  return useAuthStore;
+
+import { Config } from '@/constants/Config';
+
+interface FetchOptions extends RequestInit {
+  timeout?: number;
 }
 
 /**
- * Makes a fetch request with timeout support via AbortController.
+ * Get the current auth token.
+ * In production, this would come from Clerk's session.
+ * In dev mode, we use a mock token stored globally.
  */
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number
-): Promise<Response> {
+function getAuthToken(): string | null {
+  return (global as any).__pawven_auth_token || null;
+}
+
+/**
+ * Authenticated fetch wrapper.
+ * - Prepends API_BASE_URL if path doesn't start with http
+ * - Adds Authorization header if token available
+ * - Adds Content-Type: application/json for POST/PATCH/PUT
+ * - Implements timeout (default 30s)
+ */
+export async function apiFetch<T = any>(
+  path: string,
+  options: FetchOptions = {}
+): Promise<{ data: T | null; error: string | null; status: number }> {
+  const url = path.startsWith('http') ? path : `${Config.API_BASE_URL}${path}`;
+  const token = getAuthToken();
+  const timeout = options.timeout || Config.API_TIMEOUT;
+
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  // Add auth header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Add content-type for mutation requests
+  if (['POST', 'PATCH', 'PUT'].includes(options.method || '')) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+
+  // Create abort controller for timeout
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
     const response = await fetch(url, {
       ...options,
+      headers,
       signal: controller.signal,
     });
-    return response;
-  } finally {
+
     clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({ error: response.statusText }));
+      return {
+        data: null,
+        error: errorBody.error || `Request failed with status ${response.status}`,
+        status: response.status,
+      };
+    }
+
+    const data = await response.json();
+    return { data, error: null, status: response.status };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+
+    if (err.name === 'AbortError') {
+      return { data: null, error: 'Request timed out', status: 0 };
+    }
+
+    return { data: null, error: err.message || 'Network error', status: 0 };
   }
 }
 
 /**
- * Builds the request headers, injecting the Authorization token
- * when an active session exists.
+ * Convenience methods
  */
-function buildHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+export const api = {
+  get: <T = any>(path: string) => apiFetch<T>(path, { method: 'GET' }),
 
-  try {
-    const authStore = getAuthStore();
-    const state = authStore.getState();
-    if (state.session && state.token) {
-      headers['Authorization'] = `Bearer ${state.token}`;
-    }
-  } catch {
-    // Auth store not yet available — skip auth header
-  }
+  post: <T = any>(path: string, body?: any) =>
+    apiFetch<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
 
-  return headers;
-}
+  patch: <T = any>(path: string, body?: any) =>
+    apiFetch<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined }),
+
+  delete: <T = any>(path: string) => apiFetch<T>(path, { method: 'DELETE' }),
+};
+
 
 /**
- * Creates a network error response with statusCode 0.
- */
-function networkError(message: string): ApiResponse<never> {
-  return {
-    data: null,
-    error: {
-      statusCode: 0,
-      message,
-      retry: true,
-    },
-  };
-}
-
-/**
- * Creates an HTTP error response from a non-2xx status.
- */
-function httpError(statusCode: number, message: string, retry = false): ApiResponse<never> {
-  return {
-    data: null,
-    error: {
-      statusCode,
-      message,
-      retry,
-    },
-  };
-}
-
-/**
- * Core request function handling auth refresh, retries, and error mapping.
- */
-async function request<T>(
-  method: string,
-  path: string,
-  body?: unknown
-): Promise<ApiResponse<T>> {
-  const url = `${Config.API_BASE_URL}${path}`;
-
-  const makeRequest = async (): Promise<Response> => {
-    const headers = buildHeaders();
-    const options: RequestInit = {
-      method,
-      headers,
-    };
-
-    if (body !== undefined && method !== 'GET') {
-      options.body = JSON.stringify(body);
-    }
-
-    return fetchWithTimeout(url, options, Config.API_TIMEOUT);
-  };
-
-  try {
-    let response = await makeRequest();
-
-    // Handle 401: attempt token refresh and retry once
-    if (response.status === 401) {
-      try {
-        const authStore = getAuthStore();
-        await authStore.getState().refreshSession();
-
-        // Retry with refreshed token
-        response = await makeRequest();
-
-        // If still unauthorized after refresh, sign out
-        if (response.status === 401) {
-          await authStore.getState().signOut();
-          return httpError(401, 'Authentication failed after token refresh');
-        }
-      } catch {
-        // Refresh failed — sign out and return error
-        try {
-          const authStore = getAuthStore();
-          await authStore.getState().signOut();
-        } catch {
-          // Sign out may also fail — best effort
-        }
-        return httpError(401, 'Session expired. Please sign in again.');
-      }
-    }
-
-    // Parse successful responses
-    if (response.ok) {
-      const data = (await response.json()) as T;
-      return { data, error: null };
-    }
-
-    // Non-401 error responses — try to extract message from response body
-    let message = `Request failed with status ${response.status}`;
-    try {
-      const errorBody = await response.json();
-      if (errorBody && errorBody.message) {
-        message = errorBody.message;
-      }
-    } catch {
-      // Response body not parseable as JSON — use default message
-    }
-
-    return httpError(response.status, message);
-  } catch (error: unknown) {
-    // Network errors and timeouts
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        return networkError('Request timed out after 30 seconds');
-      }
-      return networkError(error.message || 'Network request failed');
-    }
-    return networkError('An unexpected network error occurred');
-  }
-}
-
-/**
- * API client with typed HTTP methods.
- * All methods return a structured ApiResponse<T> — never throw.
+ * Legacy-compatible apiClient export.
+ * Stores use `apiClient.get<T>()` which returns `{ data: T | null, error: { message: string } | null }`.
  */
 export const apiClient = {
-  /**
-   * Performs a GET request to the given path.
-   */
-  get<T>(path: string): Promise<ApiResponse<T>> {
-    return request<T>('GET', path);
+  get: async <T = any>(path: string) => {
+    const result = await apiFetch<T>(path, { method: 'GET' });
+    return {
+      data: result.data,
+      error: result.error ? { message: result.error, statusCode: result.status, retry: result.status === 0 } : null,
+    };
   },
 
-  /**
-   * Performs a POST request to the given path with an optional body.
-   */
-  post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
-    return request<T>('POST', path, body);
+  post: async <T = any>(path: string, body?: any) => {
+    const result = await apiFetch<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+    return {
+      data: result.data,
+      error: result.error ? { message: result.error, statusCode: result.status, retry: result.status === 0 } : null,
+    };
   },
 
-  /**
-   * Performs a PUT request to the given path with an optional body.
-   */
-  put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
-    return request<T>('PUT', path, body);
-  },
-
-  /**
-   * Performs a DELETE request to the given path.
-   */
-  delete<T>(path: string): Promise<ApiResponse<T>> {
-    return request<T>('DELETE', path);
+  patch: async <T = any>(path: string, body?: any) => {
+    const result = await apiFetch<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
+    return {
+      data: result.data,
+      error: result.error ? { message: result.error, statusCode: result.status, retry: result.status === 0 } : null,
+    };
   },
 };

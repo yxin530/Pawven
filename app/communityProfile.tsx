@@ -11,6 +11,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getPostsByOrg } from '@/data/posts';
 import { getRandomAvatar } from '@/constants/Avatars';
+import { isFollowingOrg, toggleFollow } from '@/store/follow-store';
 
 export default function CommunityProfileScreen() {
   const router = useRouter();
@@ -29,17 +30,13 @@ export default function CommunityProfileScreen() {
   const bio = params.bio || 'No description available.';
   const locationArea = params.location || '';
 
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(isFollowingOrg(params.id || ''));
   const posts = getPostsByOrg(communityName);
 
   const handleFollowToggle = () => {
-    if (isFollowing) {
-      setFollowersCount(prev => prev - 1);
-      setIsFollowing(false);
-    } else {
-      setFollowersCount(prev => prev + 1);
-      setIsFollowing(true);
-    }
+    const newState = toggleFollow(params.id || '');
+    setIsFollowing(newState);
+    setFollowersCount(prev => newState ? prev + 1 : prev - 1);
   };
 
   return (
@@ -58,7 +55,7 @@ export default function CommunityProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrapper}>
           <Image
-            source={getRandomAvatar(2)}
+            source={getRandomAvatar(parseInt(params.id?.replace(/\D/g, '') || '0', 10))}
             style={styles.avatar}
           />
         </View>

@@ -32,9 +32,9 @@ const MAP_PINS = [
   { id: 'vet_002', type: 'vet', icon: '🩺', lat: 5.363, lng: 100.460, title: 'Dr Kevin Ong', description: 'Small animal veterinarian with experience in surgery and rescue medicine.', address: 'Bukit Mertajam, Penang', followers: '2148', volunteers: '⭐ 4.8' },
   { id: 'vet_003', type: 'vet', icon: '🩺', lat: 3.049, lng: 101.586, title: 'Dr Lim Pet Clinic', description: 'Affordable veterinary services with support for stray animal welfare.', address: 'Subang Jaya, Selangor', followers: '3578', volunteers: '⭐ 4.7' },
   // Feeders (from smartFeeders.json)
-  { id: 'feeder_001', type: 'feeder', icon: '🍽️', lat: 3.155, lng: 101.770, title: 'Cats Canteen' },
-  { id: 'feeder_002', type: 'feeder', icon: '🍽️', lat: 1.334, lng: 103.855, title: 'Home for Cats' },
-  { id: 'feeder_003', type: 'feeder', icon: '🍽️', lat: 3.107, lng: 101.670, title: 'Taman Desa Feeder' },
+  { id: 'feeder_001', type: 'feeder', icon: '🍽️', lat: 3.155, lng: 101.770, title: 'Cats Canteen', address: 'Ampang, Selangor' },
+  { id: 'feeder_002', type: 'feeder', icon: '🍽️', lat: 1.334, lng: 103.855, title: 'Home for Cats', address: 'Toa Payoh, Singapore' },
+  { id: 'feeder_003', type: 'feeder', icon: '🍽️', lat: 3.107, lng: 101.670, title: 'Taman Desa Feeder', address: 'Taman Desa, Kuala Lumpur' },
   // Events (from events.json)
   { id: 'event_001', type: 'community', icon: '📅', lat: 3.155, lng: 101.760, title: 'Workshop by SPCA' },
   { id: 'event_002', type: 'community', icon: '📅', lat: 3.107, lng: 101.610, title: 'Vet Volunteer Day' },
@@ -237,18 +237,21 @@ export default function DiscoverMapScreen() {
                   setSelectedOrg({ id: pin.id, title: pin.title, type: pin.type, description: (pin as any).description, address: (pin as any).address, followers: (pin as any).followers, volunteers: (pin as any).volunteers });
                 } else if (pin.type === 'community') {
                   setSelectedEvent({ id: pin.id, title: pin.title, address: (pin as any).address });
+                } else if (pin.type === 'feeder') {
+                  router.push({ pathname: '/smartFeeder', params: { id: pin.id, name: pin.title, address: (pin as any).address } });
                 }
               }}
             >
               <View style={[
                 styles.pinBubble,
-                (pin.type === 'feeder' || pin.type === 'vet') && styles.pinBubbleDark,
+                pin.type === 'feeder' && styles.pinBubbleFeeder,
+                pin.type === 'vet' && styles.pinBubbleDark,
                 pin.type === 'community' && styles.pinBubbleGrey,
                 pin.type === 'ngo' && styles.pinBubbleOutline,
                 pin.type === 'tnr' && styles.pinBubbleTnr,
               ]}>
                 {pin.type === 'feeder' ? (
-                  <Image source={require('@/assets/icons/smartFeedericon.png')} style={{ width: 22, height: 22 }} resizeMode="contain" />
+                  <Image source={require('@/assets/icons/smartFeedericon.png')} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />
                 ) : (
                   <Text style={styles.pinIcon}>{pin.icon}</Text>
                 )}
@@ -291,7 +294,7 @@ export default function DiscoverMapScreen() {
             <View style={styles.sheetHandle} />
             <View style={styles.sheetContent}>
               <Image
-                source={getAvatarForType(selectedOrg?.type || 'ngo')}
+                source={getAvatarForType(selectedOrg?.type || 'ngo', parseInt(selectedOrg?.id?.replace(/\D/g, '') || '0', 10))}
                 style={styles.sheetAvatar}
               />
               <Text style={styles.sheetName}>{selectedOrg?.title}</Text>
@@ -378,6 +381,7 @@ const styles = StyleSheet.create({
   radarDot: { width: 24, height: 24, borderRadius: 12, position: 'absolute', borderWidth: 2, borderColor: WHITE },
   // Pins
   pinBubble: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: GREY_BG },
+  pinBubbleFeeder: { width: 48, height: 48, borderRadius: 24, backgroundColor: DARK, overflow: 'hidden' },
   pinBubbleDark: { backgroundColor: DARK },
   pinBubbleGrey: { backgroundColor: '#6E6E73' },
   pinBubbleOutline: { backgroundColor: WHITE, borderWidth: 2, borderColor: DARK },

@@ -229,6 +229,10 @@ export default function NGOVetProfileScreen() {
           ) : (
             <Text style={styles.coverPhotoLabel}>Cover Photo</Text>
           )}
+          {/* Back button */}
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={styles.backBtnText}>←</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.editProfileBtn} onPress={handleEditProfile}>
             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -450,6 +454,8 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 32 },
   coverPhoto: { height: 140, backgroundColor: '#dcdcdc', alignItems: 'center', justifyContent: 'center', position: 'relative' },
   coverPhotoLabel: { color: '#8a8a8a', fontSize: 14 },
+  backBtn: { position: 'absolute', top: 16, left: 16, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  backBtnText: { fontSize: 18, color: '#1C1C1E' },
   editProfileBtn: { position: 'absolute', top: 16, right: 16, backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   editProfileBtnText: { fontSize: 13, fontWeight: '600', color: '#111' },
   avatarWrapper: { marginTop: -40, marginLeft: 16 },

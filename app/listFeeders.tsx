@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
@@ -20,9 +19,9 @@ interface Feeder {
 }
 
 const FALLBACK_DATA: Feeder[] = [
-  { id: '1', name: 'Cats Canteen', location: 'Ampang', status: 'online', kibbleLevel: 85 },
-  { id: '2', name: 'Home for Cats', location: 'Toa Payoh', status: 'online', kibbleLevel: 62 },
-  { id: '3', name: 'Taman Desa Feeder', location: 'KL', status: 'offline', kibbleLevel: 18 },
+  { id: 'feeder_001', name: 'Cats Canteen', location: 'Ampang, Selangor', status: 'online', kibbleLevel: 85 },
+  { id: 'feeder_003', name: 'Taman Desa Feeder', location: 'Taman Desa, Kuala Lumpur', status: 'online', kibbleLevel: 72 },
+  { id: 'feeder_002', name: 'Home for Cats', location: 'Toa Payoh, Singapore', status: 'online', kibbleLevel: 62 },
 ];
 
 export default function ListFeeders() {
@@ -51,7 +50,7 @@ export default function ListFeeders() {
   const renderItem = ({ item }: { item: Feeder }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => Alert.alert(item.name, `Location: ${item.location}\nStatus: ${item.status}\nKibble: ${item.kibbleLevel}%`)}
+      onPress={() => router.push({ pathname: '/smartFeeder', params: { id: item.id, name: item.name, address: item.location, kibbleLevel: String(item.kibbleLevel), status: item.status } })}
     >
       <View style={styles.cardRow}>
         <View style={styles.avatar}>
@@ -65,16 +64,16 @@ export default function ListFeeders() {
           <View
             style={[
               styles.statusBadge,
-              { backgroundColor: item.status === 'online' ? '#E8F5E9' : '#FFEBEE' },
+              { backgroundColor: '#E8F5E9' },
             ]}
           >
             <Text
               style={[
                 styles.statusText,
-                { color: item.status === 'online' ? '#4CAF50' : '#F44336' },
+                { color: '#4CAF50' },
               ]}
             >
-              {item.status === 'online' ? '🟢' : '🔴'} {item.status}
+              🟢 online
             </Text>
           </View>
           <Text style={styles.kibbleText}>{item.kibbleLevel}% kibble</Text>
@@ -97,7 +96,7 @@ export default function ListFeeders() {
         <ActivityIndicator style={{ marginTop: 40 }} color="#8E8E93" />
       ) : (
         <FlatList
-          data={feeders}
+          data={feeders.filter(f => f.status === 'online')}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}

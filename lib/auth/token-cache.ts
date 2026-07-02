@@ -1,6 +1,12 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import type { TokenCache } from '@clerk/clerk-expo/dist/cache/types';
+
+// TokenCache interface for Clerk auth persistence
+interface TokenCache {
+  getToken: (key: string) => Promise<string | null>;
+  saveToken: (key: string, value: string) => Promise<void>;
+  clearToken?: (key: string) => void | Promise<void>;
+}
 
 /**
  * Retrieves a token from SecureStore by key.

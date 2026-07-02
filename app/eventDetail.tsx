@@ -327,6 +327,16 @@ export default function EventDetailScreen() {
           </TouchableOpacity>
         ))}
 
+        {/* Manage Event button — visible to hosts/NGOs */}
+        {((global as any).__pawven_role === 'ngo' || (global as any).__pawven_role === 'vet') && (
+          <TouchableOpacity
+            style={{ backgroundColor: '#1C1C1E', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 8, marginBottom: 8 }}
+            onPress={() => Alert.alert('Coming Soon', 'Event management features are coming in a future update. Stay tuned! 🐾')}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>⚙️ Manage Event</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.divider} />
 
         {/* Who's going */}
