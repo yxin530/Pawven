@@ -16,6 +16,7 @@ import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { Config } from '@/constants/Config';
 import { getRandomAvatar, getAvatarForType } from '@/constants/Avatars';
+import CommunityMapCard from '@/components/ui/MapSidebar';
 
 type MapFilterKey = 'All' | 'Feeder' | 'Events' | 'NGOs' | 'Vets' | 'TNR';
 
@@ -342,6 +343,9 @@ export default function DiscoverMapScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {/* Swipeable Sidebar — swipe right to open, left to close */}
+      <CommunityMapCard />
     </View>
   );
 }
